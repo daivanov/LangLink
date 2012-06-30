@@ -18,6 +18,8 @@
  */
 
 #include <QApplication>
+#include <QWebView>
+#include <QWebFrame>
 #include <QBuffer>
 #include <QTimer>
 #include <QTime>
@@ -37,6 +39,8 @@ Translator::Translator(QObject *parent)
             SLOT(onGenerated(QMultiMap<TranslationHandler::Type,QString>)));
     connect(m_translator, SIGNAL(translated(QString,QMultiMap<TranslationHandler::Type,QString>)),
             SLOT(onTranslated(QString,QMultiMap<TranslationHandler::Type,QString>)));
+    connect(m_translator, SIGNAL(captcha(const QWebPage*)),
+            SLOT(onCaptcha(const QWebPage*)));
 }
 
 Translator::~Translator()
@@ -110,4 +114,15 @@ void Translator::onTranslated(const QString &word,
     }
 
     QTimer::singleShot(SAFETY_INTERVAL, this, SLOT(iterateTranslation()));
+}
+
+void Translator::onCaptcha(const QWebPage *page)
+{
+    QWebView *view = new QWebView();
+    view->setPage(const_cast<QWebPage*>(page));
+    view->show();
+    connect(page, SIGNAL(loadStarted()),
+            view, SLOT(hide()));
+    connect(page, SIGNAL(loadStarted()),
+            view, SLOT(deleteLater()));
 }

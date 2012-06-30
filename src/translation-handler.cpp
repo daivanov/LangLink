@@ -17,6 +17,7 @@
  * License along with LangLink. If not, see http://www.gnu.org/licenses/.
  */
 
+#include <QWebView>
 #include <QWebFrame>
 #include <QWebElement>
 #include <QTimer>
@@ -103,20 +104,33 @@ void TranslationHandler::onTranslationFinished(bool ok)
         QWebElement table =
             req->webFrame()->findFirstElement("table[id=\"translations\"]");
         if (table.isNull()) {
-            /* Try random suggestion */
             QWebElement suggestions =
                 req->webFrame()->findFirstElement("ul[id=\"suggestions\"]");
             QWebElementCollection links = suggestions.findAll("a");
+            m_pendingKey = sender();
+            m_pendingRequests.insert(m_pendingKey, req);
             if (links.count() > 0) {
+                /* Try random suggestion */
                 QWebElement link = links.at(rand() % links.count());
                 req->m_word = link.toPlainText().trimmed();
                 qDebug() << "Changing word to" << req->m_word;
                 m_request.setUrl(TranslationUrl + link.attribute("href"));
-                m_pendingKey = sender();
-                m_pendingRequests.insert(m_pendingKey, req);
                 QTimer::singleShot(SAFETY_INTERVAL, this, SLOT(reTranslate()));
-                return;
+            } else {
+                /* Solve captcha */
+                QWebElementCollection divs = req->webFrame()->findAllElements("div");
+                foreach (QWebElement div, divs) {
+                    QString js;
+                    if (div.attribute("class") != QLatin1String("content search_results")) {
+                        js = QString("document.getElementById('%1').style.display = 'none'").arg(div.attribute("id"));
+                    } else {
+                        js = QString("document.getElementTagName('p').style.display = 'none'");
+                    }
+                    req->webFrame()->evaluateJavaScript(js);
+                }
+                emit captcha(req->m_page);
             }
+            return;
         } else {
             /* Proceed with translation */
             QWebElementCollection cells = table.findAll("td");

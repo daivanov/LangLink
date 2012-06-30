@@ -51,7 +51,8 @@ private slots:
     void onTranslated(const QString &word,
                       const QMultiMap<TranslationHandler::Type,QString> &translation);
     void iterateTranslation();
-    
+    void onCaptcha(const QWebPage *page);
+
 private:
     State m_state;
     TranslationHandler *m_translator;

@@ -24,7 +24,7 @@
 #include <QMap>
 #include <QWebPage>
 
-#define SAFETY_INTERVAL 250
+#define SAFETY_INTERVAL (250 + rand() % 50)
 
 class TranslationHandler : public QObject
 {
@@ -65,7 +65,8 @@ signals:
                     const QMultiMap<TranslationHandler::Type,QString> &translation);
     void generated(const QMultiMap<TranslationHandler::Type,QString> &words);
     void error();
-    
+    void captcha(const QWebPage *page);
+
 private slots:
     void onMultipleGenerationFinished(bool ok);
     void onTranslationFinished(bool ok);
