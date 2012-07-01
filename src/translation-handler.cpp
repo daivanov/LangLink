@@ -120,13 +120,19 @@ void TranslationHandler::onTranslationFinished(bool ok)
                 /* Solve captcha */
                 QWebElementCollection divs = req->webFrame()->findAllElements("div");
                 foreach (QWebElement div, divs) {
-                    QString js;
                     if (div.attribute("class") != QLatin1String("content search_results")) {
-                        js = QString("document.getElementById('%1').style.display = 'none'").arg(div.attribute("id"));
+                        QString js =
+                            QString("document.getElementById('%1').style.display = 'none'").arg(div.attribute("id"));
+                        req->webFrame()->evaluateJavaScript(js);
                     } else {
-                        js = QString("document.getElementTagName('p').style.display = 'none'");
+                        QWebElement p = div.findFirst("p");
+                        // TODO: localize string
+                        p.setInnerXml("Oops! Your help is required");
+                        QWebElement submit = div.findFirst("input[type=\"submit\"]");
+                        // TODO: localize string
+                        submit.setAttribute("value", "Submit");
+                        div.setAttribute("align", "center");
                     }
-                    req->webFrame()->evaluateJavaScript(js);
                 }
                 emit captcha(req->m_page);
             }
