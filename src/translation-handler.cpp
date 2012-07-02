@@ -49,8 +49,8 @@ TranslationHandler::TranslationHandler(QObject *parent)
 
 TranslationHandler::~TranslationHandler()
 {
-    
-    for (QHash<QObject*, TranslationHandler::Request*>::iterator i = m_pendingRequests.begin();
+    QHash<QObject*, TranslationHandler::Request*>::iterator i;
+    for (i = m_pendingRequests.begin();
          m_pendingRequests.count() > 0;
          i = m_pendingRequests.erase(i))
         delete i.value();
@@ -74,7 +74,7 @@ void TranslationHandler::onMultipleGenerationFinished(bool ok)
         QWebElement table =
             req->webFrame()->findFirstElement("table");
         QWebElementCollection items = table.findAll("li");
-        foreach (QWebElement item, items)
+        foreach (const QWebElement &item, items)
             words.insert(Any, item.toPlainText());
         emit generated(words);
     } else {
@@ -141,7 +141,7 @@ void TranslationHandler::onTranslationFinished(bool ok)
             /* Proceed with translation */
             QWebElementCollection cells = table.findAll("td");
             Type type = Any;
-            foreach (QWebElement cell, cells) {
+            foreach (const QWebElement &cell, cells) {
                 if (cell.attribute("colspan") != QString()) {
                     QString strType = cell.toPlainText().trimmed();
                     type = stringToType(strType);
