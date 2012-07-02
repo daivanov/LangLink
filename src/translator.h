@@ -23,6 +23,7 @@
 #include <QObject>
 
 #include "translation-handler.h"
+#include "link-view.h"
 
 class Translator : public QObject
 {
@@ -56,8 +57,10 @@ private slots:
 private:
     State m_state;
     TranslationHandler *m_translator;
+    int m_wordCount;
     QMultiMap<TranslationHandler::Type,QString> m_words;
     QList<QPair<QString,QString> > m_dictionary;
+    LinkView *m_view;
 };
 
 #endif // TRANSLATOR_H

@@ -25,12 +25,19 @@
 #include <QTime>
 #include <QDebug>
 
+#include <QGraphicsScene>
+#include <QGraphicsView>
+
 #include "translator.h"
+
+#define WORD_COUNT 10
 
 Translator::Translator(QObject *parent)
     : QObject(parent),
     m_state(Empty),
-    m_translator(new TranslationHandler(this))
+    m_translator(new TranslationHandler(this)),
+    m_wordCount(WORD_COUNT),
+    m_view(0)
 {
     qsrand(QTime::currentTime().msec());
     connect(m_translator, SIGNAL(error()),
@@ -77,15 +84,40 @@ void Translator::onGenerated(const QMultiMap<TranslationHandler::Type,QString> &
 
 void Translator::iterateTranslation()
 {
-    QMapIterator<TranslationHandler::Type,QString> i(m_words);
-    if (i.hasNext()) {
-        i.next();
-        qDebug() << "Generated:" << i.value();
-        translateWord(i.value(), i.key());
-    } else {
+    int cnt = m_dictionary.count();
+    if (cnt >= m_wordCount) {
         qDebug() << m_dictionary;
         m_state = Done;
-        qApp->quit();
+        m_words.clear();
+
+        /* Prepare and expose view */
+        m_view = new LinkView(this);
+
+        int *shuffle = new int[cnt];
+        memset(shuffle, -1, cnt * sizeof(int));
+        QList<QPair<QString,QString> >::const_iterator i;
+        int j = 0;
+        for (i = m_dictionary.constBegin(); i != m_dictionary.constEnd(); ++i, ++j) {
+            m_view->appendOriginal(i->first);
+            int idx = rand() % (cnt - j);
+            if (shuffle[j] == -1) {
+                if (shuffle[j + idx] == -1)
+                    shuffle[j] = j + idx;
+                else
+                    shuffle[j] = shuffle[j + idx];
+                shuffle[j + idx] = j;
+            }
+            m_view->appendTranslation(i->second, shuffle[j]);
+        }
+        delete[] shuffle;
+        m_view->show();
+    } else {
+        QMapIterator<TranslationHandler::Type,QString> i(m_words);
+        if (i.hasNext()) {
+            i.next();
+            qDebug() << "Generated:" << i.value();
+            translateWord(i.value(), i.key());
+        }
     }
 }
 
