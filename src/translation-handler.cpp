@@ -43,8 +43,10 @@ TranslationHandler::TranslationHandler(QObject *parent)
 {
     m_request.setHeader(QNetworkRequest::ContentTypeHeader,
                          "application/x-www-form-urlencoded; charset=utf-8");
-    m_request.setRawHeader("User-Agent",
-                            "Mozilla/5.0 (X11; Linux x86_64; rv:13.0) Gecko/20100101 Firefox/13.0");
+    int rev = 10 + rand() % 4;
+    QString agent =
+        QString("Mozilla/5.0 (X11; Linux x86; rv:%1.0) Gecko/20100101 Firefox/%2.0").arg(rev).arg(rev);
+    m_request.setRawHeader("User-Agent", agent.toAscii());
 }
 
 TranslationHandler::~TranslationHandler()
