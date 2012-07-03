@@ -18,8 +18,6 @@
  */
 
 #include <QApplication>
-#include <QWebView>
-#include <QWebFrame>
 #include <QBuffer>
 #include <QTimer>
 #include <QTime>
@@ -46,8 +44,6 @@ Translator::Translator(QObject *parent)
             SLOT(onGenerated(QMultiMap<TranslationHandler::Type,QString>)));
     connect(m_translator, SIGNAL(translated(QString,QMultiMap<TranslationHandler::Type,QString>)),
             SLOT(onTranslated(QString,QMultiMap<TranslationHandler::Type,QString>)));
-    connect(m_translator, SIGNAL(captcha(const QWebPage*)),
-            SLOT(onCaptcha(const QWebPage*)));
 }
 
 Translator::~Translator()
@@ -72,6 +68,14 @@ void Translator::randomWord()
         m_words.clear();
         m_state = Generation;
         m_translator->generateMultipleWords();
+
+        /* Prepare and expose view */
+        if (!m_view) {
+            m_view = new LinkView(this);
+            connect(m_translator, SIGNAL(captcha(const QWebPage*)),
+                    m_view, SLOT(captcha(const QWebPage*)));
+            m_view->show();
+        }
     }
 }
 
@@ -86,19 +90,14 @@ void Translator::iterateTranslation()
 {
     int cnt = m_dictionary.count();
     if (cnt >= m_wordCount) {
-        qDebug() << m_dictionary;
         m_state = Done;
         m_words.clear();
-
-        /* Prepare and expose view */
-        m_view = new LinkView(this);
 
         int *shuffle = new int[cnt];
         memset(shuffle, -1, cnt * sizeof(int));
         QList<QPair<QString,QString> >::const_iterator i;
         int j = 0;
         for (i = m_dictionary.constBegin(); i != m_dictionary.constEnd(); ++i, ++j) {
-            m_view->appendOriginal(i->first);
             int idx = rand() % (cnt - j);
             if (shuffle[j] == -1) {
                 if (shuffle[j + idx] == -1)
@@ -110,7 +109,6 @@ void Translator::iterateTranslation()
             m_view->appendTranslation(i->second, shuffle[j]);
         }
         delete[] shuffle;
-        m_view->show();
     } else {
         QMapIterator<TranslationHandler::Type,QString> i(m_words);
         if (i.hasNext()) {
@@ -135,6 +133,8 @@ void Translator::onTranslated(const QString &word,
         QList<TranslationHandler::Type> keys = translation.keys();
         QString value = translation.value(keys.at(rand() % keys.count()));
         m_dictionary << QPair<QString,QString>(word, value);
+
+        m_view->appendOriginal(word);
     } else {
         qDebug("No translation found, skipping");
     }
@@ -146,15 +146,4 @@ void Translator::onTranslated(const QString &word,
     }
 
     QTimer::singleShot(SAFETY_INTERVAL, this, SLOT(iterateTranslation()));
-}
-
-void Translator::onCaptcha(const QWebPage *page)
-{
-    QWebView *view = new QWebView();
-    view->setPage(const_cast<QWebPage*>(page));
-    view->show();
-    connect(page, SIGNAL(loadStarted()),
-            view, SLOT(hide()));
-    connect(page, SIGNAL(loadStarted()),
-            view, SLOT(deleteLater()));
 }

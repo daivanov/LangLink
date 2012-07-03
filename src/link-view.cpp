@@ -21,7 +21,8 @@
 #include <QGraphicsView>
 #include <QGraphicsSimpleTextItem>
 #include <QGraphicsLineItem>
-#include <QFontDatabase>
+#include <QGraphicsWebView>
+#include <QWebPage>
 #include <QDebug>
 
 #include "link-view.h"
@@ -33,16 +34,12 @@ LinkView::LinkView(QObject *parent)
     : QObject(parent),
     m_scene(new QGraphicsScene(this)),
     m_view(new QGraphicsView()),
-    m_hSeparator(new QGraphicsLineItem(0, HEIGHT, 0, HEIGHT)),
-    m_vSeparator(new QGraphicsLineItem(WIDTH, 0, WIDTH, 2 * HEIGHT))
+    m_hSeparator(0),
+    m_vSeparator(0)
 {
-    m_hSeparator->setPen(QPen(Qt::yellow));
-    m_vSeparator->setPen(QPen(Qt::yellow));
-
-    m_scene->addItem(m_hSeparator);
-    m_scene->addItem(m_vSeparator);
     m_scene->setBackgroundBrush(Qt::black);
 
+    m_view->setWindowState(m_view->windowState() ^ Qt::WindowMaximized);
     m_view->setScene(m_scene);
 }
 
@@ -60,8 +57,22 @@ void LinkView::appendOriginal(const QString &item)
                      0.5 * HEIGHT - textItem->boundingRect().height()/2);
     m_originalItems.append(textItem);
     m_scene->addItem(textItem);
-    m_hSeparator->setLine(0, HEIGHT, (cnt + 2) * WIDTH, HEIGHT);
-    m_vSeparator->setLine((cnt + 1) * WIDTH, 0, (cnt + 1) * WIDTH, 2 * HEIGHT);
+    if (!m_hSeparator) {
+        m_hSeparator =
+            new QGraphicsLineItem(0, HEIGHT, (cnt + 2) * WIDTH, HEIGHT);
+        m_hSeparator->setPen(QPen(Qt::yellow));
+        m_scene->addItem(m_hSeparator);
+    } else {
+        m_hSeparator->setLine(0, HEIGHT, (cnt + 2) * WIDTH, HEIGHT);
+    }
+    if (!m_vSeparator) {
+        m_vSeparator =
+            new QGraphicsLineItem((cnt + 1) * WIDTH, 0, (cnt + 1) * WIDTH, 2 * HEIGHT);
+        m_vSeparator->setPen(QPen(Qt::yellow));
+        m_scene->addItem(m_vSeparator);
+    } else {
+        m_vSeparator->setLine((cnt + 1) * WIDTH, 0, (cnt + 1) * WIDTH, 2 * HEIGHT);
+    }
 }
 
 void LinkView::appendTranslation(const QString &item, int pos)
@@ -77,4 +88,15 @@ void LinkView::appendTranslation(const QString &item, int pos)
 void LinkView::show()
 {
     m_view->show();
+}
+
+void LinkView::captcha(const QWebPage *page)
+{
+    QGraphicsWebView *webView = new QGraphicsWebView();
+    webView->setPage(const_cast<QWebPage*>(page));
+    connect(page, SIGNAL(loadStarted()),
+            webView, SLOT(hide()));
+    connect(page, SIGNAL(loadStarted()),
+            webView, SLOT(deleteLater()));
+    m_scene->addItem(webView);
 }

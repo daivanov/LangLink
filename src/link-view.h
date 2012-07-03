@@ -25,6 +25,7 @@ class QGraphicsScene;
 class QGraphicsView;
 class QGraphicsSimpleTextItem;
 class QGraphicsLineItem;
+class QWebPage;
 
 class LinkView : public QObject
 {
@@ -38,6 +39,7 @@ public:
 
 public slots:
     void show();
+    void captcha(const QWebPage *page);
 
 private:
     QGraphicsScene *m_scene;
