@@ -21,6 +21,7 @@
 #include <QGraphicsView>
 #include <QGraphicsSimpleTextItem>
 #include <QGraphicsLineItem>
+#include <QGraphicsSceneMouseEvent>
 #include <QGraphicsWebView>
 #include <QWebPage>
 #include <QDebug>
@@ -33,6 +34,7 @@ LinkView::LinkView(int capacity, QObject *parent)
     m_view(new QGraphicsView()),
     m_hSeparator(0),
     m_vSeparator(0),
+    m_movingItem(0),
     m_capacity(capacity)
 {
     m_scene->setBackgroundBrush(Qt::black);
@@ -55,6 +57,28 @@ bool LinkView::eventFilter(QObject *obj, QEvent *event)
         m_scene->setSceneRect(newSceneRect);
         m_width = newSceneRect.width() / (m_capacity + 1);
     }
+        break;
+    case QEvent::GraphicsSceneMousePress:
+        if (!m_movingItem) {
+            QGraphicsSceneMouseEvent *mouseEvent =
+                static_cast<QGraphicsSceneMouseEvent*>(event);
+            if (mouseEvent) {
+                m_movingItem = m_scene->itemAt(mouseEvent->scenePos(), QTransform());
+                if (m_movingItem)
+                    m_translation = m_movingItem->pos() - mouseEvent->scenePos();
+            }
+        }
+        break;
+    case QEvent::GraphicsSceneMouseMove:
+        if (m_movingItem) {
+            QGraphicsSceneMouseEvent *mouseEvent =
+                static_cast<QGraphicsSceneMouseEvent*>(event);
+            if (mouseEvent)
+                m_movingItem->setPos(mouseEvent->scenePos() + m_translation);
+        }
+        break;
+    case QEvent::GraphicsSceneMouseRelease:
+        m_movingItem = 0;
         break;
     default:
         break;

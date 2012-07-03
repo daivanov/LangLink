@@ -21,8 +21,10 @@
 #define LINK_VIEW_H
 
 #include <QObject>
+#include <QPointF>
 class QGraphicsScene;
 class QGraphicsView;
+class QGraphicsItem;
 class QGraphicsSimpleTextItem;
 class QGraphicsLineItem;
 class QWebPage;
@@ -51,6 +53,8 @@ private:
     QList<QGraphicsSimpleTextItem*> m_translatedItems;
     QGraphicsLineItem *m_hSeparator;
     QGraphicsLineItem *m_vSeparator;
+    QGraphicsItem *m_movingItem;
+    QPointF m_translation;
     qreal m_width, m_height;
     int m_capacity;
 };
