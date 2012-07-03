@@ -92,11 +92,11 @@ void LinkView::show()
 
 void LinkView::captcha(const QWebPage *page)
 {
+    qDebug("Captcha");
     QGraphicsWebView *webView = new QGraphicsWebView();
+    webView->setAttribute(Qt::WA_DeleteOnClose);
     webView->setPage(const_cast<QWebPage*>(page));
     connect(page, SIGNAL(loadStarted()),
-            webView, SLOT(hide()));
-    connect(page, SIGNAL(loadStarted()),
-            webView, SLOT(deleteLater()));
+            webView, SLOT(close()));
     m_scene->addItem(webView);
 }
