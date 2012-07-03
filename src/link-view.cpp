@@ -35,6 +35,7 @@ LinkView::LinkView(int capacity, QObject *parent)
     m_hSeparator(0),
     m_vSeparator(0),
     m_movingItem(0),
+    m_currHeight(0),
     m_capacity(capacity)
 {
     m_scene->setBackgroundBrush(Qt::black);
@@ -63,9 +64,12 @@ bool LinkView::eventFilter(QObject *obj, QEvent *event)
             QGraphicsSceneMouseEvent *mouseEvent =
                 static_cast<QGraphicsSceneMouseEvent*>(event);
             if (mouseEvent) {
-                m_movingItem = m_scene->itemAt(mouseEvent->scenePos(), QTransform());
-                if (m_movingItem)
+                QGraphicsItem *item =
+                    m_scene->itemAt(mouseEvent->scenePos(), QTransform());
+                if (item && m_translatedItems.contains(item)) {
+                    m_movingItem = item;
                     m_translation = m_movingItem->pos() - mouseEvent->scenePos();
+                }
             }
         }
         break;
@@ -78,7 +82,15 @@ bool LinkView::eventFilter(QObject *obj, QEvent *event)
         }
         break;
     case QEvent::GraphicsSceneMouseRelease:
-        m_movingItem = 0;
+        if (m_movingItem) {
+            int pos = qRound(m_movingItem->pos().x() / m_width);
+            if (pos >= m_capacity)
+                pos = m_capacity - 1;
+            QRectF boundary = m_movingItem->boundingRect();
+            m_movingItem->setPos((pos + 0.5) * m_width - boundary.width()/2,
+                                 m_currHeight + 0.5 * (m_height - boundary.height()));
+            m_movingItem = 0;
+        }
         break;
     default:
         break;
@@ -94,8 +106,9 @@ void LinkView::appendOriginal(const QString &item)
     textItem->setBrush(Qt::yellow);
     QRectF boundary = textItem->boundingRect();
     m_height = 1.5 * boundary.height();
+    m_currHeight = m_height;
     textItem->setPos((cnt + 0.5) * m_width - boundary.width()/2,
-                     0.5 * m_height - boundary.height()/2);
+                     0.5 * (m_height - boundary.height()));
     m_originalItems.append(textItem);
     m_scene->addItem(textItem);
     if (!m_hSeparator) {
@@ -121,9 +134,8 @@ void LinkView::appendTranslation(const QString &item, int pos)
     QGraphicsSimpleTextItem *textItem = new QGraphicsSimpleTextItem(item);
     textItem->setBrush(Qt::yellow);
     QRectF boundary = textItem->boundingRect();
-    m_height = 1.5 * boundary.height();
     textItem->setPos((pos + 0.5) * m_width - boundary.width()/2,
-                     1.5 * m_height - boundary.height()/2);
+                     m_currHeight + 0.5 * (m_height - boundary.height()));
     m_translatedItems.append(textItem);
     m_scene->addItem(textItem);
 }

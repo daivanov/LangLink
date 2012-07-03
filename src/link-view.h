@@ -25,7 +25,6 @@
 class QGraphicsScene;
 class QGraphicsView;
 class QGraphicsItem;
-class QGraphicsSimpleTextItem;
 class QGraphicsLineItem;
 class QWebPage;
 
@@ -49,13 +48,14 @@ protected:
 private:
     QGraphicsScene *m_scene;
     QGraphicsView *m_view;
-    QList<QGraphicsSimpleTextItem*> m_originalItems;
-    QList<QGraphicsSimpleTextItem*> m_translatedItems;
+    QList<QGraphicsItem*> m_originalItems;
+    QList<QGraphicsItem*> m_translatedItems;
     QGraphicsLineItem *m_hSeparator;
     QGraphicsLineItem *m_vSeparator;
     QGraphicsItem *m_movingItem;
     QPointF m_translation;
     qreal m_width, m_height;
+    qreal m_currHeight;
     int m_capacity;
 };
 
