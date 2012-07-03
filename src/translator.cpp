@@ -71,7 +71,7 @@ void Translator::randomWord()
 
         /* Prepare and expose view */
         if (!m_view) {
-            m_view = new LinkView(this);
+            m_view = new LinkView(m_wordCount, this);
             connect(m_translator, SIGNAL(captcha(const QWebPage*)),
                     m_view, SLOT(captcha(const QWebPage*)));
             m_view->show();

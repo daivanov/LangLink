@@ -27,17 +27,16 @@
 
 #include "link-view.h"
 
-#define WIDTH 100
-#define HEIGHT 25
-
-LinkView::LinkView(QObject *parent)
+LinkView::LinkView(int capacity, QObject *parent)
     : QObject(parent),
     m_scene(new QGraphicsScene(this)),
     m_view(new QGraphicsView()),
     m_hSeparator(0),
-    m_vSeparator(0)
+    m_vSeparator(0),
+    m_capacity(capacity)
 {
     m_scene->setBackgroundBrush(Qt::black);
+    m_scene->installEventFilter(this);
 
     m_view->setWindowState(m_view->windowState() ^ Qt::WindowMaximized);
     m_view->setScene(m_scene);
@@ -48,30 +47,48 @@ LinkView::~LinkView()
     delete m_view;
 }
 
+bool LinkView::eventFilter(QObject *obj, QEvent *event)
+{
+    switch (event->type()) {
+    case QEvent::WindowActivate: {
+        QRectF newSceneRect(QPointF(0.0, 0.0), m_view->maximumViewportSize());
+        m_scene->setSceneRect(newSceneRect);
+        m_width = newSceneRect.width() / (m_capacity + 1);
+    }
+        break;
+    default:
+        break;
+    }
+    // standard event processing
+    return QObject::eventFilter(obj, event);
+}
+
 void LinkView::appendOriginal(const QString &item)
 {
     int cnt = m_originalItems.count();
     QGraphicsSimpleTextItem *textItem = new QGraphicsSimpleTextItem(item);
     textItem->setBrush(Qt::yellow);
-    textItem->setPos((cnt + 0.5) * WIDTH - textItem->boundingRect().width()/2,
-                     0.5 * HEIGHT - textItem->boundingRect().height()/2);
+    QRectF boundary = textItem->boundingRect();
+    m_height = 1.5 * boundary.height();
+    textItem->setPos((cnt + 0.5) * m_width - boundary.width()/2,
+                     0.5 * m_height - boundary.height()/2);
     m_originalItems.append(textItem);
     m_scene->addItem(textItem);
     if (!m_hSeparator) {
         m_hSeparator =
-            new QGraphicsLineItem(0, HEIGHT, (cnt + 2) * WIDTH, HEIGHT);
+            new QGraphicsLineItem(0, m_height, (cnt + 2) * m_width, m_height);
         m_hSeparator->setPen(QPen(Qt::yellow));
         m_scene->addItem(m_hSeparator);
     } else {
-        m_hSeparator->setLine(0, HEIGHT, (cnt + 2) * WIDTH, HEIGHT);
+        m_hSeparator->setLine(0, m_height, (cnt + 2) * m_width, m_height);
     }
     if (!m_vSeparator) {
         m_vSeparator =
-            new QGraphicsLineItem((cnt + 1) * WIDTH, 0, (cnt + 1) * WIDTH, 2 * HEIGHT);
+            new QGraphicsLineItem((cnt + 1) * m_width, 0, (cnt + 1) * m_width, 2 * m_height);
         m_vSeparator->setPen(QPen(Qt::yellow));
         m_scene->addItem(m_vSeparator);
     } else {
-        m_vSeparator->setLine((cnt + 1) * WIDTH, 0, (cnt + 1) * WIDTH, 2 * HEIGHT);
+        m_vSeparator->setLine((cnt + 1) * m_width, 0, (cnt + 1) * m_width, 2 * m_height);
     }
 }
 
@@ -79,8 +96,10 @@ void LinkView::appendTranslation(const QString &item, int pos)
 {
     QGraphicsSimpleTextItem *textItem = new QGraphicsSimpleTextItem(item);
     textItem->setBrush(Qt::yellow);
-    textItem->setPos((pos + 0.5) * WIDTH - textItem->boundingRect().width()/2,
-                     1.5 * HEIGHT - textItem->boundingRect().height()/2);
+    QRectF boundary = textItem->boundingRect();
+    m_height = 1.5 * boundary.height();
+    textItem->setPos((pos + 0.5) * m_width - boundary.width()/2,
+                     1.5 * m_height - boundary.height()/2);
     m_translatedItems.append(textItem);
     m_scene->addItem(textItem);
 }

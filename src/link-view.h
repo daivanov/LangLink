@@ -32,7 +32,7 @@ class LinkView : public QObject
     Q_OBJECT
 
 public:
-    LinkView(QObject *parent = 0);
+    LinkView(int capacity, QObject *parent = 0);
     ~LinkView();
     void appendOriginal(const QString &item);
     void appendTranslation(const QString &item, int pos);
@@ -41,6 +41,9 @@ public slots:
     void show();
     void captcha(const QWebPage *page);
 
+protected:
+    bool eventFilter(QObject *obj, QEvent *event);
+
 private:
     QGraphicsScene *m_scene;
     QGraphicsView *m_view;
@@ -48,6 +51,8 @@ private:
     QList<QGraphicsSimpleTextItem*> m_translatedItems;
     QGraphicsLineItem *m_hSeparator;
     QGraphicsLineItem *m_vSeparator;
+    qreal m_width, m_height;
+    int m_capacity;
 };
 
 #endif // LINK_VIEW_H
