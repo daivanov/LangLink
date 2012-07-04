@@ -17,15 +17,16 @@
  * License along with LangLink. If not, see http://www.gnu.org/licenses/.
  */
 
+#include <QtCore/qmath.h>
 #include <QGraphicsScene>
 #include <QGraphicsView>
-#include <QGraphicsSimpleTextItem>
 #include <QGraphicsLineItem>
 #include <QGraphicsSceneMouseEvent>
 #include <QGraphicsWebView>
 #include <QWebPage>
 #include <QDebug>
 
+#include "link-item.h"
 #include "link-view.h"
 
 LinkView::LinkView(int capacity, QObject *parent)
@@ -35,7 +36,7 @@ LinkView::LinkView(int capacity, QObject *parent)
     m_hSeparator(0),
     m_vSeparator(0),
     m_movingItem(0),
-    m_currHeight(0),
+    m_activeLines(0),
     m_capacity(capacity)
 {
     m_scene->setBackgroundBrush(Qt::black);
@@ -69,6 +70,7 @@ bool LinkView::eventFilter(QObject *obj, QEvent *event)
                 if (item && m_translatedItems.contains(item)) {
                     m_movingItem = item;
                     m_translation = m_movingItem->pos() - mouseEvent->scenePos();
+                    m_originPos = mapToPos(mouseEvent->scenePos());
                 }
             }
         }
@@ -83,12 +85,16 @@ bool LinkView::eventFilter(QObject *obj, QEvent *event)
         break;
     case QEvent::GraphicsSceneMouseRelease:
         if (m_movingItem) {
-            int pos = qRound(m_movingItem->pos().x() / m_width);
-            if (pos >= m_capacity)
-                pos = m_capacity - 1;
-            QRectF boundary = m_movingItem->boundingRect();
-            m_movingItem->setPos((pos + 0.5) * m_width - boundary.width()/2,
-                                 m_currHeight + 0.5 * (m_height - boundary.height()));
+            LinkItem *linkItem = dynamic_cast<LinkItem*>(m_movingItem);
+            if (linkItem) {
+                int pos = mapToPos(linkItem->center());
+                QRectF boundary = linkItem->boundingRect();
+                QPointF center((pos + 0.5) * m_width, (m_activeLines + 0.5) * m_height);
+                linkItem->setPos(center - 0.5 * boundary.bottomRight());
+                if (pos == m_originPos) {
+                    linkItem->setNextState();
+                }
+            }
             m_movingItem = 0;
         }
         break;
@@ -99,18 +105,25 @@ bool LinkView::eventFilter(QObject *obj, QEvent *event)
     return QObject::eventFilter(obj, event);
 }
 
+int LinkView::mapToPos(const QPointF &point) const
+{
+    int pos = qFloor(point.x() / m_width);
+    if (pos >= m_capacity)
+        pos = m_capacity - 1;
+    return pos;
+}
+
 void LinkView::appendOriginal(const QString &item)
 {
     int cnt = m_originalItems.count();
-    QGraphicsSimpleTextItem *textItem = new QGraphicsSimpleTextItem(item);
-    textItem->setBrush(Qt::yellow);
-    QRectF boundary = textItem->boundingRect();
+    LinkItem *linkItem = new LinkItem(item);
+    QRectF boundary = linkItem->boundingRect();
     m_height = 1.5 * boundary.height();
-    m_currHeight = m_height;
-    textItem->setPos((cnt + 0.5) * m_width - boundary.width()/2,
-                     0.5 * (m_height - boundary.height()));
-    m_originalItems.append(textItem);
-    m_scene->addItem(textItem);
+    m_activeLines = 1;
+    QPointF center((cnt + 0.5) * m_width, 0.5 * m_height);
+    linkItem->setPos(center - 0.5 * boundary.bottomRight());
+    m_originalItems.append(linkItem);
+    m_scene->addItem(linkItem);
     if (!m_hSeparator) {
         m_hSeparator =
             new QGraphicsLineItem(0, m_height, (cnt + 2) * m_width, m_height);
@@ -131,13 +144,13 @@ void LinkView::appendOriginal(const QString &item)
 
 void LinkView::appendTranslation(const QString &item, int pos)
 {
-    QGraphicsSimpleTextItem *textItem = new QGraphicsSimpleTextItem(item);
-    textItem->setBrush(Qt::yellow);
-    QRectF boundary = textItem->boundingRect();
-    textItem->setPos((pos + 0.5) * m_width - boundary.width()/2,
-                     m_currHeight + 0.5 * (m_height - boundary.height()));
-    m_translatedItems.append(textItem);
-    m_scene->addItem(textItem);
+    LinkItem *linkItem = new LinkItem(item);
+    linkItem->setState(LinkItem::Undefined);
+    QRectF boundary = linkItem->boundingRect();
+    QPointF center((pos + 0.5) * m_width, (m_activeLines + 0.5) * m_height);
+    linkItem->setPos(center - 0.5 * boundary.bottomRight());
+    m_translatedItems.append(linkItem);
+    m_scene->addItem(linkItem);
 }
 
 void LinkView::show()

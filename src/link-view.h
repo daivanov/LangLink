@@ -22,6 +22,7 @@
 
 #include <QObject>
 #include <QPointF>
+
 class QGraphicsScene;
 class QGraphicsView;
 class QGraphicsItem;
@@ -46,6 +47,8 @@ protected:
     bool eventFilter(QObject *obj, QEvent *event);
 
 private:
+    int mapToPos(const QPointF &point) const;
+
     QGraphicsScene *m_scene;
     QGraphicsView *m_view;
     QList<QGraphicsItem*> m_originalItems;
@@ -53,9 +56,10 @@ private:
     QGraphicsLineItem *m_hSeparator;
     QGraphicsLineItem *m_vSeparator;
     QGraphicsItem *m_movingItem;
+    int m_originPos;
     QPointF m_translation;
     qreal m_width, m_height;
-    qreal m_currHeight;
+    qreal m_activeLines;
     int m_capacity;
 };
 

@@ -13,3 +13,5 @@ HEADERS += translation-handler.h
 SOURCES += translation-handler.cpp
 HEADERS += link-view.h
 SOURCES += link-view.cpp
+HEADERS += link-item.h
+SOURCES += link-item.cpp
