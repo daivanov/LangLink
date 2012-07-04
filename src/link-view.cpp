@@ -70,17 +70,31 @@ bool LinkView::eventFilter(QObject *obj, QEvent *event)
                 if (item && m_translatedItems.contains(item)) {
                     m_movingItem = item;
                     m_translation = m_movingItem->pos() - mouseEvent->scenePos();
-                    m_originPos = mapToPos(mouseEvent->scenePos());
+                    m_gapPos = m_originPos = mapToPos(mouseEvent->scenePos());
                 }
             }
         }
         break;
     case QEvent::GraphicsSceneMouseMove:
         if (m_movingItem) {
+            LinkItem *linkItem = dynamic_cast<LinkItem*>(m_movingItem);
             QGraphicsSceneMouseEvent *mouseEvent =
                 static_cast<QGraphicsSceneMouseEvent*>(event);
-            if (mouseEvent)
-                m_movingItem->setPos(mouseEvent->scenePos() + m_translation);
+            if (mouseEvent && linkItem) {
+                linkItem->setPos(mouseEvent->scenePos() + m_translation);
+                int pos = mapToPos(linkItem->center());
+                if (pos != m_gapPos) {
+                    QGraphicsItem *item =
+                        m_scene->itemAt(mapFromPos(pos), QTransform());
+                    if (item == linkItem)
+                        qCritical("FIXME: use colliding items");
+                    if (item) {
+                        QRectF boundary = item->boundingRect();
+                        item->setPos(mapFromPos(m_gapPos) - 0.5 * boundary.bottomRight());
+                        m_gapPos = pos;
+                    }
+                }
+            }
         }
         break;
     case QEvent::GraphicsSceneMouseRelease:
@@ -89,8 +103,7 @@ bool LinkView::eventFilter(QObject *obj, QEvent *event)
             if (linkItem) {
                 int pos = mapToPos(linkItem->center());
                 QRectF boundary = linkItem->boundingRect();
-                QPointF center((pos + 0.5) * m_width, (m_activeLines + 0.5) * m_height);
-                linkItem->setPos(center - 0.5 * boundary.bottomRight());
+                linkItem->setPos(mapFromPos(pos) - 0.5 * boundary.bottomRight());
                 if (pos == m_originPos) {
                     linkItem->setNextState();
                 }
@@ -110,7 +123,14 @@ int LinkView::mapToPos(const QPointF &point) const
     int pos = qFloor(point.x() / m_width);
     if (pos >= m_capacity)
         pos = m_capacity - 1;
+    else if (pos < 0)
+        pos = 0;
     return pos;
+}
+
+QPointF LinkView::mapFromPos(int pos) const
+{
+    return QPointF((pos + 0.5) * m_width, (m_activeLines + 0.5) * m_height);
 }
 
 void LinkView::appendOriginal(const QString &item)
@@ -147,8 +167,7 @@ void LinkView::appendTranslation(const QString &item, int pos)
     LinkItem *linkItem = new LinkItem(item);
     linkItem->setState(LinkItem::Undefined);
     QRectF boundary = linkItem->boundingRect();
-    QPointF center((pos + 0.5) * m_width, (m_activeLines + 0.5) * m_height);
-    linkItem->setPos(center - 0.5 * boundary.bottomRight());
+    linkItem->setPos(mapFromPos(pos) - 0.5 * boundary.bottomRight());
     m_translatedItems.append(linkItem);
     m_scene->addItem(linkItem);
 }

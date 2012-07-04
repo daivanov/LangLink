@@ -48,6 +48,7 @@ protected:
 
 private:
     int mapToPos(const QPointF &point) const;
+    QPointF mapFromPos(int pos) const;
 
     QGraphicsScene *m_scene;
     QGraphicsView *m_view;
@@ -56,7 +57,7 @@ private:
     QGraphicsLineItem *m_hSeparator;
     QGraphicsLineItem *m_vSeparator;
     QGraphicsItem *m_movingItem;
-    int m_originPos;
+    int m_originPos, m_gapPos;
     QPointF m_translation;
     qreal m_width, m_height;
     qreal m_activeLines;
