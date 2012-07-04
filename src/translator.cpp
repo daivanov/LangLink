@@ -50,7 +50,7 @@ Translator::~Translator()
 {
 }
 
-Translator::State Translator::state()
+Translator::State Translator::state() const
 {
     return m_state;
 }

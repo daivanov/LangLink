@@ -40,7 +40,7 @@ public:
         Done
     };
 
-    State state();
+    State state() const;
 
 public slots:
     void randomWord();
