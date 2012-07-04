@@ -52,8 +52,11 @@ private slots:
     void onTranslated(const QString &word,
                       const QMultiMap<TranslationHandler::Type,QString> &translation);
     void iterateTranslation();
+    void onResult(const QList<QString> &translation);
 
 private:
+    void makeGuess();
+
     State m_state;
     TranslationHandler *m_translator;
     int m_wordCount;

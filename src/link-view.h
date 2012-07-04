@@ -27,6 +27,7 @@ class QGraphicsScene;
 class QGraphicsView;
 class QGraphicsItem;
 class QGraphicsLineItem;
+class LinkButton;
 class QWebPage;
 
 class LinkView : public QObject
@@ -38,10 +39,17 @@ public:
     ~LinkView();
     void appendOriginal(const QString &item);
     void appendTranslation(const QString &item, int pos);
+    void setAssessment(int correct);
 
 public slots:
     void show();
     void captcha(const QWebPage *page);
+
+private slots:
+    void evaluateLine();
+
+signals:
+    void result(const QList<QString> &translations);
 
 protected:
     bool eventFilter(QObject *obj, QEvent *event);
@@ -56,6 +64,7 @@ private:
     QList<QGraphicsItem*> m_translatedItems;
     QGraphicsLineItem *m_hSeparator;
     QGraphicsLineItem *m_vSeparator;
+    LinkButton *m_button;
     QGraphicsItem *m_movingItem;
     int m_originPos, m_gapPos;
     QPointF m_translation;

@@ -15,3 +15,5 @@ HEADERS += link-view.h
 SOURCES += link-view.cpp
 HEADERS += link-item.h
 SOURCES += link-item.cpp
+HEADERS += link-button.h
+SOURCES += link-button.cpp

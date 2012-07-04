@@ -74,6 +74,8 @@ void Translator::randomWord()
             m_view = new LinkView(m_wordCount, this);
             connect(m_translator, SIGNAL(captcha(const QWebPage*)),
                     m_view, SLOT(captcha(const QWebPage*)));
+            connect(m_view, SIGNAL(result(const QList<QString>)),
+                    SLOT(onResult(const QList<QString>)));
             m_view->show();
         }
     }
@@ -88,27 +90,10 @@ void Translator::onGenerated(const QMultiMap<TranslationHandler::Type,QString> &
 
 void Translator::iterateTranslation()
 {
-    int cnt = m_dictionary.count();
-    if (cnt >= m_wordCount) {
+    if (m_dictionary.count() >= m_wordCount) {
         m_state = Done;
         m_words.clear();
-
-        int *shuffle = new int[cnt];
-        memset(shuffle, -1, cnt * sizeof(int));
-        QList<QPair<QString,QString> >::const_iterator i;
-        int j = 0;
-        for (i = m_dictionary.constBegin(); i != m_dictionary.constEnd(); ++i, ++j) {
-            int idx = rand() % (cnt - j);
-            if (shuffle[j] == -1) {
-                if (shuffle[j + idx] == -1)
-                    shuffle[j] = j + idx;
-                else
-                    shuffle[j] = shuffle[j + idx];
-                shuffle[j + idx] = j;
-            }
-            m_view->appendTranslation(i->second, shuffle[j]);
-        }
-        delete[] shuffle;
+        makeGuess();
     } else {
         QMapIterator<TranslationHandler::Type,QString> i(m_words);
         if (i.hasNext()) {
@@ -146,4 +131,42 @@ void Translator::onTranslated(const QString &word,
     }
 
     QTimer::singleShot(SAFETY_INTERVAL, this, SLOT(iterateTranslation()));
+}
+
+void Translator::onResult(const QList<QString> &translation)
+{
+    int correct = 0;
+    QList<QPair<QString,QString> >::const_iterator i;
+    QList<QString>::const_iterator j;
+    qDebug() << m_dictionary.count() << translation.count();
+    for (i = m_dictionary.constBegin(), j = translation.constBegin();
+         i != m_dictionary.constEnd() && j != translation.constEnd();
+         ++i, ++j) {
+        if (i->second == *j)
+            ++correct;
+    }
+    qDebug() << correct;
+    m_view->setAssessment(correct);
+    makeGuess();
+}
+
+void Translator::makeGuess()
+{
+    int cnt = m_dictionary.count();
+    int *shuffle = new int[cnt];
+    memset(shuffle, -1, cnt * sizeof(int));
+    QList<QPair<QString,QString> >::const_iterator i;
+    int j = 0;
+    for (i = m_dictionary.constBegin(); i != m_dictionary.constEnd(); ++i, ++j) {
+        int idx = rand() % (cnt - j);
+        if (shuffle[j] == -1) {
+            if (shuffle[j + idx] == -1)
+                shuffle[j] = j + idx;
+            else
+                shuffle[j] = shuffle[j + idx];
+            shuffle[j + idx] = j;
+        }
+        m_view->appendTranslation(i->second, shuffle[j]);
+    }
+    delete[] shuffle;
 }

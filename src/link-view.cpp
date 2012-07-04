@@ -26,6 +26,7 @@
 #include <QWebPage>
 #include <QDebug>
 
+#include "link-button.h"
 #include "link-item.h"
 #include "link-view.h"
 
@@ -35,6 +36,7 @@ LinkView::LinkView(int capacity, QObject *parent)
     m_view(new QGraphicsView()),
     m_hSeparator(0),
     m_vSeparator(0),
+    m_button(0),
     m_movingItem(0),
     m_activeLines(0),
     m_capacity(capacity)
@@ -170,11 +172,51 @@ void LinkView::appendTranslation(const QString &item, int pos)
     linkItem->setPos(mapFromPos(pos) - 0.5 * boundary.bottomRight());
     m_translatedItems.append(linkItem);
     m_scene->addItem(linkItem);
+    if (!m_button && m_translatedItems.count() == m_capacity) {
+        m_button = new LinkButton(0.8 * m_height);
+        QRectF boundary = m_button->boundingRect();
+        m_button->setPos(mapFromPos(m_capacity) - 0.5 * boundary.bottomRight());
+        m_scene->addItem(m_button);
+        connect(m_button, SIGNAL(clicked()),
+                SLOT(evaluateLine()));
+    }
+}
+
+void LinkView::setAssessment(int correct)
+{
+    LinkItem *assessment = new LinkItem(QString::number(correct));
+    QRectF boundary = assessment->boundingRect();
+    assessment->setPos(mapFromPos(m_capacity) -
+                      (QPointF(0, m_height) + 0.5 * boundary.bottomRight()));
+    m_scene->addItem(assessment);
 }
 
 void LinkView::show()
 {
     m_view->show();
+}
+
+void LinkView::evaluateLine()
+{
+    QMap<qreal,QString> translations;
+    foreach(QGraphicsItem *item, m_translatedItems) {
+        LinkItem *linkItem = dynamic_cast<LinkItem*>(item);
+        if (linkItem) {
+            translations.insert(linkItem->pos().x(), linkItem->text());
+        }
+    }
+    /* Prepare data for next iteration */
+    m_activeLines++;
+    int cnt = m_translatedItems.count();
+    m_translatedItems.clear();
+
+    emit result(translations.values());
+
+    /* Update scene */
+    QRectF boundary = m_button->boundingRect();
+    m_button->setPos(mapFromPos(m_capacity) - 0.5 * boundary.bottomRight());
+    m_vSeparator->setLine(cnt * m_width, 0, cnt * m_width,
+                          (m_activeLines + 1) * m_height);
 }
 
 void LinkView::captcha(const QWebPage *page)
