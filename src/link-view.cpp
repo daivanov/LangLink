@@ -69,10 +69,16 @@ bool LinkView::eventFilter(QObject *obj, QEvent *event)
             if (mouseEvent) {
                 QGraphicsItem *item =
                     m_scene->itemAt(mouseEvent->scenePos(), QTransform());
-                if (item && m_translatedItems.contains(item)) {
-                    m_movingItem = item;
-                    m_translation = m_movingItem->pos() - mouseEvent->scenePos();
-                    m_gapPos = m_originPos = mapToPos(mouseEvent->scenePos());
+                if (item) {
+                    if (m_translatedItems.contains(item)) {
+                        m_movingItem = item;
+                        m_translation = m_movingItem->pos() - mouseEvent->scenePos();
+                        m_gapPos = m_originPos = mapToPos(mouseEvent->scenePos());
+                    } else {
+                        LinkItem *linkItem = dynamic_cast<LinkItem*>(item);
+                        if (linkItem)
+                            linkItem->setNextState();
+                    }
                 }
             }
         }
