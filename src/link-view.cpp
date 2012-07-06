@@ -93,16 +93,16 @@ bool LinkView::eventFilter(QObject *obj, QEvent *event)
                 if (pos != m_gapPos) {
                     QGraphicsItem *item =
                         m_scene->itemAt(mapFromPos(pos), QTransform());
-                    LinkItem *linkItem2 = dynamic_cast<LinkItem*>(item);
-                    if (linkItem2 == linkItem) {
-                        QList<QGraphicsItem*> collidingItems = m_scene->collidingItems(linkItem);
+                    if (item == m_movingItem) {
+                        QList<QGraphicsItem*> collidingItems = m_scene->collidingItems(m_movingItem);
                         if (!collidingItems.isEmpty()) {
-                            linkItem2 = dynamic_cast<LinkItem*>(collidingItems.first());
+                            item = dynamic_cast<LinkItem*>(collidingItems.first());
                         } else {
-                            linkItem2 = 0;
+                            item = 0;
                         }
                     }
-                    if (linkItem2) {
+                    LinkItem *linkItem2 = dynamic_cast<LinkItem*>(item);
+                    if (linkItem2 && linkItem2->state() != LinkItem::Correct) {
                         linkItem2->setCenterPos(mapFromPos(m_gapPos));
                         m_gapPos = pos;
                     }
@@ -114,9 +114,8 @@ bool LinkView::eventFilter(QObject *obj, QEvent *event)
         if (m_movingItem) {
             LinkItem *linkItem = dynamic_cast<LinkItem*>(m_movingItem);
             if (linkItem) {
-                int pos = mapToPos(linkItem->center());
-                linkItem->setCenterPos(mapFromPos(pos));
-                if (pos == m_originPos) {
+                linkItem->setCenterPos(mapFromPos(m_gapPos));
+                if (m_gapPos == m_originPos) {
                     linkItem->setNextState();
                 }
             }
