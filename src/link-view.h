@@ -45,6 +45,7 @@ public:
 
 public slots:
     void show();
+    void clear();
     void captcha(const QWebPage *page);
 
 private slots:
@@ -52,6 +53,7 @@ private slots:
 
 signals:
     void result(const QList<QPair<int,QString> > &translations);
+    void solved();
 
 protected:
     bool eventFilter(QObject *obj, QEvent *event);

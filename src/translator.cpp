@@ -79,7 +79,12 @@ void Translator::randomWord()
                     m_view, SLOT(captcha(const QWebPage*)));
             connect(m_view, SIGNAL(result(const QList<QPair<int,QString> >)),
                     SLOT(onResult(const QList<QPair<int,QString> >)));
+            connect(m_view, SIGNAL(solved()),
+                    SLOT(randomWord()));
             m_view->show();
+        } else {
+            memset(m_shuffle, -1, m_wordCount * sizeof(int));            
+            m_view->clear();
         }
     }
 }
@@ -150,7 +155,8 @@ void Translator::onResult(const QList<QPair<int,QString> > &translation)
         m_shuffle[j->first] = k;
     }
     m_view->setOverallAssessment(correct);
-    makeGuess();
+    if (correct < m_wordCount)
+        makeGuess();
 }
 
 void Translator::makeGuess()

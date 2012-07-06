@@ -180,12 +180,17 @@ void LinkView::appendTranslation(const QString &item, int pos)
     linkItem->setCenterPos(mapFromPos(pos));
     m_translatedItems.append(linkItem);
     m_scene->addItem(linkItem);
-    if (!m_button && m_translatedItems.count() == m_capacity) {
-        m_button = new LinkButton(0.8 * m_height);
-        m_button->setCenterPos(mapFromPos(m_capacity));
-        m_scene->addItem(m_button);
-        connect(m_button, SIGNAL(clicked()),
-                SLOT(evaluateLine()));
+    if (m_translatedItems.count() == m_capacity) {
+        if (!m_button) {
+            m_button = new LinkButton(0.8 * m_height);
+            m_button->setCenterPos(mapFromPos(m_capacity));
+            m_scene->addItem(m_button);
+            connect(m_button, SIGNAL(clicked()),
+                    SLOT(evaluateLine()));
+        } else {
+            m_button->setCenterPos(mapFromPos(m_capacity));
+            m_button->show();
+        }
     }
 }
 
@@ -194,6 +199,15 @@ void LinkView::setOverallAssessment(int correct)
     LinkItem *assessment = new LinkItem(QString::number(correct));
     assessment->setCenterPos(mapFromPos(m_capacity) - QPointF(0, m_height));
     m_scene->addItem(assessment);
+    if (correct == m_capacity) {
+        // TODO: translate string
+        LinkItem *greeting = new LinkItem("Congratulations!");
+        QPointF center = mapFromPos(m_capacity / 2);
+        if (m_capacity % 2 == 0)
+            center -= QPointF(m_width / 2, 0);
+        greeting->setCenterPos(center);
+        m_scene->addItem(greeting);
+    }
 }
 
 void LinkView::show()
@@ -201,8 +215,33 @@ void LinkView::show()
     m_view->show();
 }
 
+void LinkView::clear()
+{
+    QList<QGraphicsItem*> items = m_scene->items();
+    foreach(QGraphicsItem *item, items) {
+        LinkItem *linkItem = dynamic_cast<LinkItem*>(item);
+        if (linkItem) {
+            m_scene->removeItem(linkItem);
+            delete linkItem;
+        }
+    }
+    if (m_button)
+        m_button->hide();
+    if (m_hSeparator)
+        m_hSeparator->setLine(0, 0, 0, 0);
+    if (m_vSeparator)
+        m_vSeparator->setLine(0, 0, 0, 0);
+    m_activeLines = 0;
+    m_originalItems.clear();
+}
+
 void LinkView::evaluateLine()
 {
+    if (m_translatedItems.isEmpty()) {
+        emit solved();
+        return;
+    }
+
     QMap<qreal,QPair<int,QString> > translations;
     int origin = 0;
     foreach(QGraphicsItem *item, m_translatedItems) {
