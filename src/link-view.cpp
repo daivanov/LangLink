@@ -94,8 +94,14 @@ bool LinkView::eventFilter(QObject *obj, QEvent *event)
                     QGraphicsItem *item =
                         m_scene->itemAt(mapFromPos(pos), QTransform());
                     LinkItem *linkItem2 = dynamic_cast<LinkItem*>(item);
-                    if (linkItem2 == linkItem)
-                        qCritical("FIXME: use colliding items");
+                    if (linkItem2 == linkItem) {
+                        QList<QGraphicsItem*> collidingItems = m_scene->collidingItems(linkItem);
+                        if (!collidingItems.isEmpty()) {
+                            linkItem2 = dynamic_cast<LinkItem*>(collidingItems.first());
+                        } else {
+                            linkItem2 = 0;
+                        }
+                    }
                     if (linkItem2) {
                         linkItem2->setCenterPos(mapFromPos(m_gapPos));
                         m_gapPos = pos;
