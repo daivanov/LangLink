@@ -95,7 +95,26 @@ void TranslationHandler::translateWord(const QString &word, Type type)
     m_pendingRequests.insert(req->webFrame(), req);
     connect(req->webFrame(), SIGNAL(loadFinished(bool)),
             SLOT(onTranslationFinished(bool)));
-    req->webFrame()->load(m_request);
+    QTimer::singleShot(SAFETY_INTERVAL, this, SLOT(onFakeTranslation()));
+    //req->webFrame()->load(m_request);
+}
+
+void TranslationHandler::onFakeTranslation()
+{
+    QObject *key;
+    QHash<QObject*, Request*>::const_iterator i = m_pendingRequests.begin();
+    if (i != m_pendingRequests.end())
+        key = i.key();
+    Request *req = m_pendingRequests.take(key);
+    if (req) {
+        QMultiMap<Type,QString> translation;
+        translation.insert(Any, req->m_word);
+        emit translated(req->m_word, translation);
+    } else {
+        qCritical("Translation loading has failed");
+        emit error();
+    }
+    delete req;
 }
 
 void TranslationHandler::onTranslationFinished(bool ok)

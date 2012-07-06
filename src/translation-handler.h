@@ -70,6 +70,7 @@ signals:
 private slots:
     void onMultipleGenerationFinished(bool ok);
     void onTranslationFinished(bool ok);
+    void onFakeTranslation();
     void reTranslate();
 
 private:
