@@ -94,11 +94,11 @@ bool LinkView::eventFilter(QObject *obj, QEvent *event)
                 if (pos != m_gapPos) {
                     QGraphicsItem *item =
                         m_scene->itemAt(mapFromPos(pos), QTransform());
-                    if (item == linkItem)
+                    LinkItem *linkItem2 = dynamic_cast<LinkItem*>(item);
+                    if (linkItem2 == linkItem)
                         qCritical("FIXME: use colliding items");
-                    if (item) {
-                        QRectF boundary = item->boundingRect();
-                        item->setPos(mapFromPos(m_gapPos) - 0.5 * boundary.bottomRight());
+                    if (linkItem2) {
+                        linkItem2->setCenterPos(mapFromPos(m_gapPos));
                         m_gapPos = pos;
                     }
                 }
@@ -110,8 +110,7 @@ bool LinkView::eventFilter(QObject *obj, QEvent *event)
             LinkItem *linkItem = dynamic_cast<LinkItem*>(m_movingItem);
             if (linkItem) {
                 int pos = mapToPos(linkItem->center());
-                QRectF boundary = linkItem->boundingRect();
-                linkItem->setPos(mapFromPos(pos) - 0.5 * boundary.bottomRight());
+                linkItem->setCenterPos(mapFromPos(pos));
                 if (pos == m_originPos) {
                     linkItem->setNextState();
                 }
@@ -145,11 +144,10 @@ void LinkView::appendOriginal(const QString &item)
 {
     int cnt = m_originalItems.count();
     LinkItem *linkItem = new LinkItem(item);
-    QRectF boundary = linkItem->boundingRect();
-    m_height = 1.5 * boundary.height();
+    m_height = 1.5 * linkItem->boundingRect().height();
     m_activeLines = 1;
     QPointF center((cnt + 0.5) * m_width, 0.5 * m_height);
-    linkItem->setPos(center - 0.5 * boundary.bottomRight());
+    linkItem->setCenterPos(center);
     m_originalItems.append(linkItem);
     m_scene->addItem(linkItem);
     if (!m_hSeparator) {
@@ -174,14 +172,12 @@ void LinkView::appendTranslation(const QString &item, int pos)
 {
     LinkItem *linkItem = new LinkItem(item);
     linkItem->setState(LinkItem::Undefined);
-    QRectF boundary = linkItem->boundingRect();
-    linkItem->setPos(mapFromPos(pos) - 0.5 * boundary.bottomRight());
+    linkItem->setCenterPos(mapFromPos(pos));
     m_translatedItems.append(linkItem);
     m_scene->addItem(linkItem);
     if (!m_button && m_translatedItems.count() == m_capacity) {
         m_button = new LinkButton(0.8 * m_height);
-        QRectF boundary = m_button->boundingRect();
-        m_button->setPos(mapFromPos(m_capacity) - 0.5 * boundary.bottomRight());
+        m_button->setCenterPos(mapFromPos(m_capacity));
         m_scene->addItem(m_button);
         connect(m_button, SIGNAL(clicked()),
                 SLOT(evaluateLine()));
@@ -191,9 +187,7 @@ void LinkView::appendTranslation(const QString &item, int pos)
 void LinkView::setAssessment(int correct)
 {
     LinkItem *assessment = new LinkItem(QString::number(correct));
-    QRectF boundary = assessment->boundingRect();
-    assessment->setPos(mapFromPos(m_capacity) -
-                      (QPointF(0, m_height) + 0.5 * boundary.bottomRight()));
+    assessment->setCenterPos(mapFromPos(m_capacity) - QPointF(0, m_height));
     m_scene->addItem(assessment);
 }
 
@@ -219,8 +213,7 @@ void LinkView::evaluateLine()
     emit result(translations.values());
 
     /* Update scene */
-    QRectF boundary = m_button->boundingRect();
-    m_button->setPos(mapFromPos(m_capacity) - 0.5 * boundary.bottomRight());
+    m_button->setCenterPos(mapFromPos(m_capacity));
     m_vSeparator->setLine(cnt * m_width, 0, cnt * m_width,
                           (m_activeLines + 1) * m_height);
 }

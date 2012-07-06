@@ -41,11 +41,11 @@ public:
     void setNextState();
 
     QPointF center() const;
+    void setCenterPos(const QPointF &pos);
 
 private:
     State m_state;
     QPointF m_center;
-    QPointF m_motionStart;
 };
 
 #endif // LINK_ITEM_H

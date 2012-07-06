@@ -51,3 +51,8 @@ bool LinkButton::sceneEvent(QEvent *event)
     }
     return QGraphicsItem::sceneEvent(event);
 }
+
+void LinkButton::setCenterPos(const QPointF &pos)
+{
+    setPos(pos - boundingRect().center());
+}

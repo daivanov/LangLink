@@ -80,3 +80,8 @@ QPointF LinkItem::center() const
 {
     return pos() + m_center;
 }
+
+void LinkItem::setCenterPos(const QPointF &pos)
+{
+    setPos(pos - m_center);
+}

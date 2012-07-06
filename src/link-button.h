@@ -31,6 +31,8 @@ public:
     LinkButton(qreal scalingFactor, QGraphicsItem *parent = 0);
     ~LinkButton();
 
+    void setCenterPos(const QPointF &pos);
+
 signals:
     void clicked();
 
