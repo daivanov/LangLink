@@ -24,6 +24,7 @@
 
 #include "translation-handler.h"
 #include "link-view.h"
+#include "link-item.h"
 
 class Translator : public QObject
 {
@@ -52,7 +53,7 @@ private slots:
     void onTranslated(const QString &word,
                       const QMultiMap<TranslationHandler::Type,QString> &translation);
     void iterateTranslation();
-    void onResult(const QList<QString> &translation);
+    void onResult(const QList<QPair<int,QString> > &translation);
 
 private:
     void makeGuess();
@@ -63,6 +64,7 @@ private:
     QMultiMap<TranslationHandler::Type,QString> m_words;
     QList<QPair<QString,QString> > m_dictionary;
     LinkView *m_view;
+    int *m_shuffle;
 };
 
 #endif // TRANSLATOR_H

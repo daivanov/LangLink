@@ -23,6 +23,8 @@
 #include <QObject>
 #include <QPointF>
 
+#include "link-item.h"
+
 class QGraphicsScene;
 class QGraphicsView;
 class QGraphicsItem;
@@ -39,7 +41,7 @@ public:
     ~LinkView();
     void appendOriginal(const QString &item);
     void appendTranslation(const QString &item, int pos);
-    void setAssessment(int correct);
+    void setOverallAssessment(int correct);
 
 public slots:
     void show();
@@ -49,7 +51,7 @@ private slots:
     void evaluateLine();
 
 signals:
-    void result(const QList<QString> &translations);
+    void result(const QList<QPair<int,QString> > &translations);
 
 protected:
     bool eventFilter(QObject *obj, QEvent *event);

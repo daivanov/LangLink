@@ -27,7 +27,6 @@
 #include <QDebug>
 
 #include "link-button.h"
-#include "link-item.h"
 #include "link-view.h"
 
 LinkView::LinkView(int capacity, QObject *parent)
@@ -184,7 +183,7 @@ void LinkView::appendTranslation(const QString &item, int pos)
     }
 }
 
-void LinkView::setAssessment(int correct)
+void LinkView::setOverallAssessment(int correct)
 {
     LinkItem *assessment = new LinkItem(QString::number(correct));
     assessment->setCenterPos(mapFromPos(m_capacity) - QPointF(0, m_height));
@@ -198,12 +197,15 @@ void LinkView::show()
 
 void LinkView::evaluateLine()
 {
-    QMap<qreal,QString> translations;
+    QMap<qreal,QPair<int,QString> > translations;
+    int origin = 0;
     foreach(QGraphicsItem *item, m_translatedItems) {
         LinkItem *linkItem = dynamic_cast<LinkItem*>(item);
         if (linkItem) {
-            translations.insert(linkItem->pos().x(), linkItem->text());
+            translations.insert(linkItem->pos().x(),
+                                QPair<int,QString>(origin, linkItem->text()));
         }
+        ++origin;
     }
     /* Prepare data for next iteration */
     m_activeLines++;
