@@ -24,20 +24,21 @@
 #include "link-button.h"
 
 LinkButton::LinkButton(qreal scalingFactor, QGraphicsItem *parent)
-    :   QGraphicsPolygonItem(parent)
+    : QGraphicsPolygonItem(parent)
 {
-    QPolygonF shape;
-    shape << (scalingFactor * QPointF(0.0, 0.0))
-          << (scalingFactor * QPointF(0.5, 1.0))
-          << (scalingFactor * QPointF(1.0, 0.0))
-          << (scalingFactor * QPointF(0.5, 0.5));
-    setPolygon(shape);
     setBrush(Qt::yellow);
     setPen(QPen(Qt::yellow));
+    m_scale.scale(scalingFactor, scalingFactor);
 }
 
 LinkButton::~LinkButton()
 {
+}
+
+void LinkButton::setPolygon(const QPolygonF &polygon)
+{
+    QPolygonF scaled = m_scale.map(polygon);
+    QGraphicsPolygonItem::setPolygon(scaled);
 }
 
 bool LinkButton::sceneEvent(QEvent *event)

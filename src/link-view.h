@@ -69,6 +69,7 @@ private:
     QGraphicsLineItem *m_hSeparator;
     QGraphicsLineItem *m_vSeparator;
     LinkButton *m_button;
+    LinkButton *m_closeButton;
     QGraphicsItem *m_movingItem;
     int m_originPos, m_gapPos;
     QPointF m_translation;

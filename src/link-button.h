@@ -21,6 +21,7 @@
 #define LINK_BUTTON_H
 
 #include <QGraphicsPolygonItem>
+#include <QTransform>
 #include <QObject>
 
 class LinkButton : public QObject, public QGraphicsPolygonItem
@@ -32,12 +33,16 @@ public:
     ~LinkButton();
 
     void setCenterPos(const QPointF &pos);
+    void setPolygon(const QPolygonF &polygon);
 
 signals:
     void clicked();
 
 protected:
     bool sceneEvent(QEvent *event);
+
+private:
+    QTransform m_scale;
 };
 
 #endif // LINK_BUTTON_H

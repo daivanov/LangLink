@@ -23,11 +23,14 @@
 #include <QGraphicsLineItem>
 #include <QGraphicsSceneMouseEvent>
 #include <QGraphicsWebView>
+#include <QApplication>
 #include <QWebPage>
 #include <QDebug>
 
 #include "link-button.h"
 #include "link-view.h"
+
+#define CROSS_SIZE 20.0
 
 LinkView::LinkView(int capacity, QObject *parent)
     : QObject(parent),
@@ -36,6 +39,7 @@ LinkView::LinkView(int capacity, QObject *parent)
     m_hSeparator(0),
     m_vSeparator(0),
     m_button(0),
+    m_closeButton(0),
     m_movingItem(0),
     m_activeLines(0),
     m_capacity(capacity)
@@ -43,7 +47,7 @@ LinkView::LinkView(int capacity, QObject *parent)
     m_scene->setBackgroundBrush(Qt::black);
     m_scene->installEventFilter(this);
 
-    m_view->setWindowState(m_view->windowState() ^ Qt::WindowMaximized);
+    m_view->setWindowState(m_view->windowState() ^ Qt::WindowFullScreen);
     m_view->setScene(m_scene);
 }
 
@@ -59,6 +63,23 @@ bool LinkView::eventFilter(QObject *obj, QEvent *event)
         QRectF newSceneRect(QPointF(0.0, 0.0), m_view->maximumViewportSize());
         m_scene->setSceneRect(newSceneRect);
         m_width = newSceneRect.width() / (m_capacity + 1);
+        if (!m_closeButton) {
+            m_closeButton = new LinkButton(CROSS_SIZE);
+            QPolygonF shape;
+            shape << QPointF(0.0, 0.25) << QPointF(0.25, 0.0)
+                  << QPointF(0.5, 0.25)
+                  << QPointF(0.75, 0.0) << QPointF(1.0, 0.25)
+                  << QPointF(0.75, 0.5)
+                  << QPointF(1.0, 0.75) << QPointF(0.75, 1.0)
+                  << QPointF(0.5, 0.75)
+                  << QPointF(0.25, 1.0) << QPointF(0.0, 0.75)
+                  << QPointF(0.25, 0.5);
+            m_closeButton->setPolygon(shape);
+            m_closeButton->setCenterPos(mapFromPos(m_capacity) + QPointF(0.0, CROSS_SIZE / 2));
+            m_scene->addItem(m_closeButton);
+            connect(m_closeButton, SIGNAL(clicked()),
+                    qApp, SLOT(quit()));
+        }
     }
         break;
     case QEvent::GraphicsSceneMousePress:
@@ -182,6 +203,9 @@ void LinkView::appendTranslation(const QString &item, int pos)
     if (m_translatedItems.count() == m_capacity) {
         if (!m_button) {
             m_button = new LinkButton(0.8 * m_height);
+            QPolygonF shape;
+            shape << QPointF(0.0, 0.0) << QPointF(0.5, 1.0) << QPointF(1.0, 0.0);
+            m_button->setPolygon(shape);
             m_button->setCenterPos(mapFromPos(m_capacity));
             m_scene->addItem(m_button);
             connect(m_button, SIGNAL(clicked()),

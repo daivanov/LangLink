@@ -83,7 +83,7 @@ void Translator::randomWord()
                     SLOT(randomWord()));
             m_view->show();
         } else {
-            memset(m_shuffle, -1, m_wordCount * sizeof(int));            
+            memset(m_shuffle, -1, m_wordCount * sizeof(int));
             m_view->clear();
         }
     }
