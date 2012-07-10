@@ -58,6 +58,18 @@ LinkView::~LinkView()
 
 bool LinkView::eventFilter(QObject *obj, QEvent *event)
 {
+    if (obj != m_scene) {
+        if (event->type() == QEvent::GraphicsSceneResize) {
+            QGraphicsWebView *captcha = qobject_cast<QGraphicsWebView*>(obj);
+            if (captcha) {
+                /* Center captcha in the screen */
+                captcha->setPos(m_scene->sceneRect().center() -
+                                captcha->boundingRect().bottomRight() / 2);
+            }
+        }
+        return QObject::eventFilter(obj, event);
+    }
+
     switch (event->type()) {
     case QEvent::WindowActivate: {
         QRectF newSceneRect(QPointF(0.0, 0.0), m_view->maximumViewportSize());
@@ -294,6 +306,7 @@ void LinkView::captcha(const QWebPage *page)
     QGraphicsWebView *webView = new QGraphicsWebView();
     webView->setAttribute(Qt::WA_DeleteOnClose);
     webView->setPage(const_cast<QWebPage*>(page));
+    webView->installEventFilter(this);
     connect(page, SIGNAL(loadStarted()),
             webView, SLOT(close()));
     m_scene->addItem(webView);
