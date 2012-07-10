@@ -223,8 +223,8 @@ void LinkView::setOverallAssessment(int correct)
     assessment->setCenterPos(mapFromPos(m_capacity) - QPointF(0, m_height));
     m_scene->addItem(assessment);
     if (correct == m_capacity) {
-        // TODO: translate string
-        LinkItem *greeting = new LinkItem("Congratulations!");
+        //% "Congratulations!"
+        LinkItem *greeting = new LinkItem(qtTrId("qtn_langlink_congrats"));
         QPointF center = mapFromPos(m_capacity / 2);
         if (m_capacity % 2 == 0)
             center -= QPointF(m_width / 2, 0);

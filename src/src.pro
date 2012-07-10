@@ -17,3 +17,8 @@ HEADERS += link-item.h
 SOURCES += link-item.cpp
 HEADERS += link-button.h
 SOURCES += link-button.cpp
+
+TRANSLATIONS = \
+    langlink.ts \
+    langlink_uk.ts \
+    langlink_ru.ts

@@ -18,12 +18,20 @@
  */
 
 #include <QApplication>
+#include <QTranslator>
+#include <QLocale>
 
 #include "translator.h"
 
 int main(int argc, char **argv)
 {
     QApplication a(argc, argv);
+
+    QString localizationFile = QString("langlink_%1").arg(QLocale::system().name());
+    QTranslator localization;
+    if (!localization.load(localizationFile))
+        qCritical("Failed to load localization file");
+    a.installTranslator(&localization);
 
     Translator translator;
     translator.randomWord();

@@ -128,11 +128,11 @@ void TranslationHandler::onTranslationFinished(bool ok)
                         req->webFrame()->evaluateJavaScript(js);
                     } else {
                         QWebElement p = div.findFirst("p");
-                        // TODO: localize string
-                        p.setInnerXml("Oops! Your help is required");
+                        //% "Oops! Your help is required"
+                        p.setInnerXml(qtTrId("qtn_langlink_solve_captcha"));
                         QWebElement submit = div.findFirst("input[type=\"submit\"]");
-                        // TODO: localize string
-                        submit.setAttribute("value", "Submit");
+                        //% "Submit"
+                        submit.setAttribute("value", qtTrId("qtn_langlink_submit"));
                         div.setAttribute("align", "center");
                     }
                 }
