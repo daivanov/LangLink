@@ -105,7 +105,8 @@ bool LinkView::eventFilter(QObject *obj, QEvent *event)
                     if (m_translatedItems.contains(item)) {
                         m_movingItem = item;
                         m_translation = m_movingItem->pos() - mouseEvent->scenePos();
-                        m_gapPos = m_originPos = mapToPos(mouseEvent->scenePos());
+                        m_gapPos = m_originPos = mapToPos(m_movingItem->pos() +
+                                                          m_movingItem->boundingRect().center());
                     } else {
                         LinkItem *linkItem = dynamic_cast<LinkItem*>(item);
                         if (linkItem)
