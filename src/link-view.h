@@ -66,6 +66,7 @@ private:
     QGraphicsView *m_view;
     QList<QGraphicsItem*> m_originalItems;
     QList<QGraphicsItem*> m_translatedItems;
+    QHash<QString,LinkItem::State> m_savedStates;
     QGraphicsLineItem *m_hSeparator;
     QGraphicsLineItem *m_vSeparator;
     LinkButton *m_button;

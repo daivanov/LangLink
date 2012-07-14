@@ -209,7 +209,10 @@ void LinkView::appendOriginal(const QString &item)
 void LinkView::appendTranslation(const QString &item, int pos)
 {
     LinkItem *linkItem = new LinkItem(item);
-    linkItem->setState(LinkItem::Undefined);
+    LinkItem::State state = m_savedStates.take(item);
+    if (state == LinkItem::Inactive)
+        state = LinkItem::Undefined;
+    linkItem->setState(state);
     linkItem->setCenterPos(mapFromPos(pos));
     m_translatedItems.append(linkItem);
     m_scene->addItem(linkItem);
@@ -280,18 +283,20 @@ void LinkView::evaluateLine()
 
     QMap<qreal,QPair<int,QString> > translations;
     int origin = 0;
-    foreach(QGraphicsItem *item, m_translatedItems) {
+    int cnt = m_translatedItems.count();
+    while (!m_translatedItems.isEmpty()) {
+        QGraphicsItem *item = m_translatedItems.takeFirst();
         LinkItem *linkItem = dynamic_cast<LinkItem*>(item);
         if (linkItem) {
             translations.insert(linkItem->pos().x(),
                                 QPair<int,QString>(origin, linkItem->text()));
+            m_savedStates.insert(linkItem->text(), linkItem->state());
         }
         ++origin;
     }
+
     /* Prepare data for next iteration */
     m_activeLines++;
-    int cnt = m_translatedItems.count();
-    m_translatedItems.clear();
 
     emit result(translations.values());
 
