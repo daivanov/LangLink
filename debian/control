@@ -1,0 +1,23 @@
+Source: langlink
+Section: user/other
+Priority: optional
+Maintainer: Daniil Ivanov <daniil.ivanov@gmail.com>
+Build-Depends: debhelper (>= 5), cdbs, libqt4-dev
+Standards-Version: 3.7.3
+
+Package: langlink
+Architecture: any
+Priority: optional
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Language self-study application
+ Application for language self-study. User is required to connect
+ bilingial word pairs correctly
+XSBC-Maemo-Display-Name: langlink
+
+Package: langlink-dbg
+Architecture: any
+Section: debug
+Priority: extra
+Depends: langlink (= ${binary:Version}), ${misc:Depends}
+Description: LangLink debug symbols
+ Debug symbols for LangLink application

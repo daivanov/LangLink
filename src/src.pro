@@ -22,3 +22,6 @@ TRANSLATIONS = \
     langlink.ts \
     langlink_uk.ts \
     langlink_ru.ts
+
+target.path = /opt/langlink/bin/
+INSTALLS += target

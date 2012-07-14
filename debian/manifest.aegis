@@ -1,0 +1,7 @@
+<aegis>
+	<request policy="add">
+	</request>
+
+	<for path="/opt/langlink/bin/langlink" />
+	<for path="applauncherd-launcher::/usr/bin/applauncherd.bin" id="" />
+</aegis>
