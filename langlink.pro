@@ -11,3 +11,6 @@ OTHER_FILES += \
     debian/changelog \
     debian/langlink.install
 
+OTHER_FILES += \
+    data/langlink.svg
+
