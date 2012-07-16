@@ -1,6 +1,6 @@
 CONFIG += ordered
 TEMPLATE = subdirs
-SUBDIRS = src
+SUBDIRS = src translation data
 
 OTHER_FILES += \
     debian/rules \
@@ -10,7 +10,3 @@ OTHER_FILES += \
     debian/compat \
     debian/changelog \
     debian/langlink.install
-
-OTHER_FILES += \
-    data/langlink.svg
-
