@@ -1,2 +1,3 @@
 opt/langlink/bin/langlink
 opt/langlink/bin/*.qm
+usr/share/applications/langlink.desktop
