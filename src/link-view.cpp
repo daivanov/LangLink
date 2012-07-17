@@ -30,8 +30,6 @@
 #include "link-button.h"
 #include "link-view.h"
 
-#define CROSS_SIZE 20.0
-
 LinkView::LinkView(int capacity, QObject *parent)
     : QObject(parent),
     m_scene(new QGraphicsScene(this)),
@@ -75,8 +73,9 @@ bool LinkView::eventFilter(QObject *obj, QEvent *event)
         QRectF newSceneRect(QPointF(0.0, 0.0), m_view->maximumViewportSize());
         m_scene->setSceneRect(newSceneRect);
         m_width = newSceneRect.width() / (m_capacity + 1);
+        m_height = newSceneRect.height() / 10;
         if (!m_closeButton) {
-            m_closeButton = new LinkButton(CROSS_SIZE);
+            m_closeButton = new LinkButton(m_height);
             QPolygonF shape;
             shape << QPointF(0.0, 0.25) << QPointF(0.25, 0.0)
                   << QPointF(0.5, 0.25)
@@ -87,7 +86,7 @@ bool LinkView::eventFilter(QObject *obj, QEvent *event)
                   << QPointF(0.25, 1.0) << QPointF(0.0, 0.75)
                   << QPointF(0.25, 0.5);
             m_closeButton->setPolygon(shape);
-            m_closeButton->setCenterPos(mapFromPos(m_capacity) + QPointF(0.0, CROSS_SIZE / 2));
+            m_closeButton->setCenterPos(mapFromPos(m_capacity));
             m_scene->addItem(m_closeButton);
             connect(m_closeButton, SIGNAL(clicked()),
                     qApp, SLOT(quit()));
@@ -182,7 +181,6 @@ void LinkView::appendOriginal(const QString &item)
 {
     int cnt = m_originalItems.count();
     LinkItem *linkItem = new LinkItem(item);
-    m_height = 1.5 * linkItem->boundingRect().height();
     m_activeLines = 1;
     QPointF center((cnt + 0.5) * m_width, 0.5 * m_height);
     linkItem->setCenterPos(center);
