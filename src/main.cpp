@@ -28,8 +28,10 @@ int main(int argc, char **argv)
     QApplication a(argc, argv);
 
     QString localizationFile = QString("langlink_%1").arg(QLocale::system().name());
+    QString localizationDirectory = QCoreApplication::applicationDirPath() +
+                                    "/../translation/";
     QTranslator localization;
-    if (!localization.load(localizationFile))
+    if (!localization.load(localizationFile,  localizationDirectory))
         qCritical("Failed to load localization file");
     a.installTranslator(&localization);
 
