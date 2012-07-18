@@ -299,6 +299,11 @@ void LinkView::evaluateLine()
 
     /* Prepare data for next iteration */
     m_activeLines++;
+    QRectF sceneRect = m_scene->sceneRect();
+    if (sceneRect.height() < (m_activeLines + 1) * m_height) {
+        sceneRect.setHeight((m_activeLines + 1) * m_height);
+        m_scene->setSceneRect(sceneRect);
+    }
 
     emit result(translations.values());
 
