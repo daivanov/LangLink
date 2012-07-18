@@ -26,7 +26,7 @@ LinkItem::LinkItem(const QString & text, QGraphicsItem *parent)
     : QGraphicsSimpleTextItem(text, parent),
     m_state(Inactive)
 {
-    setBrush(Qt::yellow);
+    setBrush(Qt::white);
     QFont currFont = font();
     currFont.setBold(true);
     setFont(currFont);
@@ -47,6 +47,8 @@ void LinkItem::setState(State state)
     m_state = state;
     switch(m_state) {
     case Inactive:
+        setBrush(Qt::white);
+        break;
     case Undefined:
         setBrush(Qt::yellow);
         break;
