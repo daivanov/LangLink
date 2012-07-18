@@ -74,6 +74,7 @@ bool LinkView::eventFilter(QObject *obj, QEvent *event)
         m_scene->setSceneRect(newSceneRect);
         m_width = newSceneRect.width() / (m_capacity + 1);
         m_height = newSceneRect.height() / 10;
+        m_transform.rotate(-qAsin(m_height / m_width) / M_PI * 180);
         if (!m_closeButton) {
             m_closeButton = new LinkButton(m_height);
             QPolygonF shape;
@@ -99,7 +100,7 @@ bool LinkView::eventFilter(QObject *obj, QEvent *event)
                 static_cast<QGraphicsSceneMouseEvent*>(event);
             if (mouseEvent) {
                 QGraphicsItem *item =
-                    m_scene->itemAt(mouseEvent->scenePos(), QTransform());
+                   m_scene->itemAt(mouseEvent->scenePos(), m_transform);
                 if (item) {
                     if (m_translatedItems.contains(item)) {
                         m_movingItem = item;
@@ -125,12 +126,13 @@ bool LinkView::eventFilter(QObject *obj, QEvent *event)
                 int pos = mapToPos(linkItem->center());
                 if (pos != m_gapPos) {
                     QGraphicsItem *item =
-                        m_scene->itemAt(mapFromPos(pos), QTransform());
+                        m_scene->itemAt(mapFromPos(pos), m_transform);
                     if (item == m_movingItem) {
                         QList<QGraphicsItem*> collidingItems = m_scene->collidingItems(m_movingItem);
                         if (!collidingItems.isEmpty()) {
                             item = dynamic_cast<LinkItem*>(collidingItems.first());
                         } else {
+                            qCritical("Can't find colliding item");
                             item = 0;
                         }
                     }
@@ -183,6 +185,7 @@ void LinkView::appendOriginal(const QString &item)
     LinkItem *linkItem = new LinkItem(item);
     m_activeLines = 1;
     QPointF center((cnt + 0.5) * m_width, 0.5 * m_height);
+    linkItem->setTransform(m_transform);
     linkItem->setCenterPos(center);
     m_originalItems.append(linkItem);
     m_scene->addItem(linkItem);
@@ -211,6 +214,7 @@ void LinkView::appendTranslation(const QString &item, int pos)
     if (state == LinkItem::Inactive)
         state = LinkItem::Undefined;
     linkItem->setState(state);
+    linkItem->setTransform(m_transform);
     linkItem->setCenterPos(mapFromPos(pos));
     m_translatedItems.append(linkItem);
     m_scene->addItem(linkItem);

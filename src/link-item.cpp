@@ -29,8 +29,10 @@ LinkItem::LinkItem(const QString & text, QGraphicsItem *parent)
     setBrush(Qt::white);
     QFont currFont = font();
     currFont.setBold(true);
+    currFont.setPixelSize(20);
     setFont(currFont);
     m_center = boundingRect().center();
+    setTransformOriginPoint(m_center);
 }
 
 LinkItem::~LinkItem()
@@ -80,10 +82,10 @@ void LinkItem::setNextState()
 
 QPointF LinkItem::center() const
 {
-    return pos() + m_center;
+    return pos() + transform().map(m_center);
 }
 
 void LinkItem::setCenterPos(const QPointF &pos)
 {
-    setPos(pos - m_center);
+    setPos(pos - transform().map(m_center));
 }

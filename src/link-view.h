@@ -22,6 +22,7 @@
 
 #include <QObject>
 #include <QPointF>
+#include <QTransform>
 
 #include "link-item.h"
 
@@ -75,6 +76,7 @@ private:
     int m_originPos, m_gapPos;
     QPointF m_translation;
     qreal m_width, m_height;
+    QTransform m_transform;
     qreal m_activeLines;
     int m_capacity;
 };
