@@ -189,22 +189,6 @@ void LinkView::appendOriginal(const QString &item)
     linkItem->setCenterPos(center);
     m_originalItems.append(linkItem);
     m_scene->addItem(linkItem);
-    if (!m_hSeparator) {
-        m_hSeparator =
-            new QGraphicsLineItem(0, m_height, (cnt + 2) * m_width, m_height);
-        m_hSeparator->setPen(QPen(Qt::yellow));
-        m_scene->addItem(m_hSeparator);
-    } else {
-        m_hSeparator->setLine(0, m_height, (cnt + 2) * m_width, m_height);
-    }
-    if (!m_vSeparator) {
-        m_vSeparator =
-            new QGraphicsLineItem((cnt + 1) * m_width, 0, (cnt + 1) * m_width, 2 * m_height);
-        m_vSeparator->setPen(QPen(Qt::yellow));
-        m_scene->addItem(m_vSeparator);
-    } else {
-        m_vSeparator->setLine((cnt + 1) * m_width, 0, (cnt + 1) * m_width, 2 * m_height);
-    }
 }
 
 void LinkView::appendTranslation(const QString &item, int pos)
@@ -219,8 +203,24 @@ void LinkView::appendTranslation(const QString &item, int pos)
     m_translatedItems.append(linkItem);
     m_scene->addItem(linkItem);
     if (m_translatedItems.count() == m_capacity) {
+        if (!m_hSeparator) {
+            m_hSeparator =
+            new QGraphicsLineItem(0, m_height, (m_capacity + 1) * m_width, m_height);
+            m_hSeparator->setPen(QPen(Qt::yellow));
+            m_scene->addItem(m_hSeparator);
+        } else {
+            m_hSeparator->setLine(0, m_height, (m_capacity + 1) * m_width, m_height);
+        }
+        if (!m_vSeparator) {
+            m_vSeparator =
+            new QGraphicsLineItem(m_capacity * m_width, 0, m_capacity * m_width, 2 * m_height);
+            m_vSeparator->setPen(QPen(Qt::yellow));
+            m_scene->addItem(m_vSeparator);
+        } else {
+            m_hSeparator->setLine(0, m_height, (m_capacity + 1) * m_width, m_height);
+        }
         if (!m_button) {
-            m_button = new LinkButton(0.8 * m_height);
+            m_button = new LinkButton(m_height);
             QPolygonF shape;
             shape << QPointF(0.0, 0.0) << QPointF(0.5, 1.0) << QPointF(1.0, 0.0);
             m_button->setPolygon(shape);
