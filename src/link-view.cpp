@@ -288,6 +288,8 @@ void LinkView::clear()
         m_progressIndicator->start();
     m_activeLines = 0;
     m_originalItems.clear();
+    QRectF newSceneRect(QPointF(0.0, 0.0), m_view->maximumViewportSize());
+    m_scene->setSceneRect(newSceneRect);
 }
 
 void LinkView::evaluateLine()
