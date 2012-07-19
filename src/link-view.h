@@ -31,6 +31,7 @@ class QGraphicsView;
 class QGraphicsItem;
 class QGraphicsLineItem;
 class LinkButton;
+class LinkProgressIndicator;
 class QWebPage;
 
 class LinkView : public QObject
@@ -70,6 +71,7 @@ private:
     QHash<QString,LinkItem::State> m_savedStates;
     QGraphicsLineItem *m_hSeparator;
     QGraphicsLineItem *m_vSeparator;
+    LinkProgressIndicator *m_progressIndicator;
     LinkButton *m_button;
     LinkButton *m_closeButton;
     QGraphicsItem *m_movingItem;

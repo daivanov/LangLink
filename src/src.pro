@@ -17,6 +17,8 @@ HEADERS += link-item.h
 SOURCES += link-item.cpp
 HEADERS += link-button.h
 SOURCES += link-button.cpp
+HEADERS += link-progress-indicator.h
+SOURCES += link-progress-indicator.cpp
 
 include(../translation/translation.pri)
 

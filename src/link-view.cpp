@@ -27,6 +27,7 @@
 #include <QWebPage>
 #include <QDebug>
 
+#include "link-progress-indicator.h"
 #include "link-button.h"
 #include "link-view.h"
 
@@ -36,6 +37,7 @@ LinkView::LinkView(int capacity, QObject *parent)
     m_view(new QGraphicsView()),
     m_hSeparator(0),
     m_vSeparator(0),
+    m_progressIndicator(0),
     m_button(0),
     m_closeButton(0),
     m_movingItem(0),
@@ -91,6 +93,13 @@ bool LinkView::eventFilter(QObject *obj, QEvent *event)
             m_scene->addItem(m_closeButton);
             connect(m_closeButton, SIGNAL(clicked()),
                     qApp, SLOT(quit()));
+        }
+        if (!m_progressIndicator) {
+            m_progressIndicator =
+                new LinkProgressIndicator(QString::number(m_capacity), m_width);
+            m_progressIndicator->setCenterPos(m_scene->sceneRect().center());
+            m_scene->addItem(m_progressIndicator);
+            m_progressIndicator->start();
         }
     }
         break;
@@ -189,6 +198,7 @@ void LinkView::appendOriginal(const QString &item)
     linkItem->setCenterPos(center);
     m_originalItems.append(linkItem);
     m_scene->addItem(linkItem);
+    m_progressIndicator->setCount(QString::number(m_capacity - cnt - 1));
 }
 
 void LinkView::appendTranslation(const QString &item, int pos)
@@ -203,9 +213,10 @@ void LinkView::appendTranslation(const QString &item, int pos)
     m_translatedItems.append(linkItem);
     m_scene->addItem(linkItem);
     if (m_translatedItems.count() == m_capacity) {
+        m_progressIndicator->stop();
         if (!m_hSeparator) {
             m_hSeparator =
-            new QGraphicsLineItem(0, m_height, (m_capacity + 1) * m_width, m_height);
+                new QGraphicsLineItem(0, m_height, (m_capacity + 1) * m_width, m_height);
             m_hSeparator->setPen(QPen(Qt::yellow));
             m_scene->addItem(m_hSeparator);
         } else {
@@ -213,7 +224,7 @@ void LinkView::appendTranslation(const QString &item, int pos)
         }
         if (!m_vSeparator) {
             m_vSeparator =
-            new QGraphicsLineItem(m_capacity * m_width, 0, m_capacity * m_width, 2 * m_height);
+                new QGraphicsLineItem(m_capacity * m_width, 0, m_capacity * m_width, 2 * m_height);
             m_vSeparator->setPen(QPen(Qt::yellow));
             m_scene->addItem(m_vSeparator);
         } else {
@@ -248,6 +259,7 @@ void LinkView::setOverallAssessment(int correct)
             center -= QPointF(m_width / 2, 0);
         greeting->setCenterPos(center);
         m_scene->addItem(greeting);
+        m_progressIndicator->setCount(QString::number(m_capacity));
     }
 }
 
@@ -272,6 +284,8 @@ void LinkView::clear()
         m_hSeparator->setLine(0, 0, 0, 0);
     if (m_vSeparator)
         m_vSeparator->setLine(0, 0, 0, 0);
+    if (m_progressIndicator)
+        m_progressIndicator->start();
     m_activeLines = 0;
     m_originalItems.clear();
 }
