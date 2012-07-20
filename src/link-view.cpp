@@ -76,6 +76,7 @@ bool LinkView::eventFilter(QObject *obj, QEvent *event)
         m_scene->setSceneRect(newSceneRect);
         m_width = newSceneRect.width() / (m_capacity + 1);
         m_height = newSceneRect.height() / 10;
+        m_transform.reset();
         m_transform.rotate(-qAsin(m_height / m_width) / M_PI * 180);
         if (!m_closeButton) {
             m_closeButton = new LinkButton(m_height);
