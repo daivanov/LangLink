@@ -62,7 +62,7 @@ protected:
 
 private:
     int mapToPos(const QPointF &point) const;
-    QPointF mapFromPos(int pos) const;
+    QPointF mapFromPos(int pos, int levelShift = 0) const;
 
     QGraphicsScene *m_scene;
     QGraphicsView *m_view;

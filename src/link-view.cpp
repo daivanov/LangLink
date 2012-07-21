@@ -184,9 +184,10 @@ int LinkView::mapToPos(const QPointF &point) const
     return pos;
 }
 
-QPointF LinkView::mapFromPos(int pos) const
+QPointF LinkView::mapFromPos(int pos, int levelShift) const
 {
-    return QPointF((pos + 0.5) * m_width, (m_activeLines + 0.5) * m_height);
+    return QPointF((pos + 0.5) * m_width,
+                   (levelShift + m_activeLines + 0.5) * m_height);
 }
 
 void LinkView::appendOriginal(const QString &item)
@@ -194,9 +195,8 @@ void LinkView::appendOriginal(const QString &item)
     int cnt = m_originalItems.count();
     LinkItem *linkItem = new LinkItem(item);
     m_activeLines = 1;
-    QPointF center((cnt + 0.5) * m_width, 0.5 * m_height);
     linkItem->setTransform(m_transform);
-    linkItem->setCenterPos(center);
+    linkItem->setCenterPos(mapFromPos(cnt, -1));
     m_originalItems.append(linkItem);
     m_scene->addItem(linkItem);
     m_progressIndicator->setCount(QString::number(m_capacity - cnt - 1));
@@ -250,7 +250,7 @@ void LinkView::appendTranslation(const QString &item, int pos)
 void LinkView::setOverallAssessment(int correct)
 {
     LinkItem *assessment = new LinkItem(QString::number(correct));
-    assessment->setCenterPos(mapFromPos(m_capacity) - QPointF(0, m_height));
+    assessment->setCenterPos(mapFromPos(m_capacity, -1));
     m_scene->addItem(assessment);
     if (correct == m_capacity) {
         //% "Congratulations!"
@@ -302,7 +302,6 @@ void LinkView::evaluateLine()
 
     QMap<qreal,QPair<int,QString> > translations;
     int origin = 0;
-    int cnt = m_translatedItems.count();
     while (!m_translatedItems.isEmpty()) {
         QGraphicsItem *item = m_translatedItems.takeFirst();
         LinkItem *linkItem = dynamic_cast<LinkItem*>(item);
@@ -326,7 +325,7 @@ void LinkView::evaluateLine()
 
     /* Update scene */
     m_button->setCenterPos(mapFromPos(m_capacity));
-    m_vSeparator->setLine(cnt * m_width, 0, cnt * m_width,
+    m_vSeparator->setLine(m_capacity * m_width, 0, m_capacity * m_width,
                           (m_activeLines + 1) * m_height);
 }
 
