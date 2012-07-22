@@ -49,6 +49,7 @@ LinkProgressIndicator::LinkProgressIndicator(const QString &count,
             scalingFactor * BALL_RELATIVE_SIZE);
         item->setBrush(Qt::yellow);
         item->setPen(QPen(Qt::yellow));
+        item->setOpacity(angle / (M_PI * 11 / 6));
         m_items.append(item);
         addToGroup(item);
     }
@@ -78,7 +79,7 @@ void LinkProgressIndicator::tick()
 {
     int cnt = m_items.count();
     for (int i = 0; i < cnt; ++i) {
-        m_items.at(i)->setOpacity(((i + m_i) % cnt) / (double) cnt);
+        m_items.at(i)->setOpacity(((i + m_i) % (cnt - 1)) / (cnt - 1.0));
     }
     m_i--;
     if (m_i < 0)
