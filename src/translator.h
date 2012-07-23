@@ -26,6 +26,9 @@
 #include "link-view.h"
 #include "link-item.h"
 
+class QNetworkConfigurationManager;
+class QNetworkSession;
+
 class Translator : public QObject
 {
     Q_OBJECT
@@ -48,6 +51,7 @@ public slots:
     void translateWord(const QString &word, TranslationHandler::Type = TranslationHandler::Any);
 
 private slots:
+    void onOnlineStateChanged(bool online);
     void onError();
     void onGenerated(const QMultiMap<TranslationHandler::Type,QString> &words);
     void onTranslated(const QString &word,
@@ -56,6 +60,8 @@ private slots:
     void onResult(const QList<QPair<int,QString> > &translation);
 
 private:
+    void requestOnlineState();
+    void requestOfflineState();
     void makeGuess();
 
     State m_state;
@@ -65,6 +71,9 @@ private:
     QList<QPair<QString,QString> > m_dictionary;
     LinkView *m_view;
     int *m_shuffle;
+    QNetworkConfigurationManager *m_networkManager;
+    QNetworkSession *m_networkSession;
+    bool m_online;
 };
 
 #endif // TRANSLATOR_H

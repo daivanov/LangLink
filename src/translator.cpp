@@ -17,14 +17,12 @@
  * License along with LangLink. If not, see http://www.gnu.org/licenses/.
  */
 
-#include <QApplication>
-#include <QBuffer>
+#include <QNetworkConfigurationManager>
+#include <QNetworkConfiguration>
+#include <QNetworkSession>
 #include <QTimer>
 #include <QTime>
 #include <QDebug>
-
-#include <QGraphicsScene>
-#include <QGraphicsView>
 
 #include "translator.h"
 
@@ -36,7 +34,10 @@ Translator::Translator(QObject *parent)
     m_translator(new TranslationHandler(this)),
     m_wordCount(WORD_COUNT),
     m_view(0),
-    m_shuffle(new int[m_wordCount])
+    m_shuffle(new int[m_wordCount]),
+    m_networkManager(new QNetworkConfigurationManager(this)),
+    m_networkSession(0),
+    m_online(m_networkManager->isOnline())
 {
     qsrand(QTime::currentTime().msec());
     memset(m_shuffle, -1, m_wordCount * sizeof(int));
@@ -46,6 +47,9 @@ Translator::Translator(QObject *parent)
             SLOT(onGenerated(QMultiMap<TranslationHandler::Type,QString>)));
     connect(m_translator, SIGNAL(translated(QString,QMultiMap<TranslationHandler::Type,QString>)),
             SLOT(onTranslated(QString,QMultiMap<TranslationHandler::Type,QString>)));
+
+    connect(m_networkManager, SIGNAL(onlineStateChanged(bool)),
+            SLOT(onOnlineStateChanged(bool)));
 }
 
 Translator::~Translator()
@@ -56,6 +60,55 @@ Translator::~Translator()
 Translator::State Translator::state() const
 {
     return m_state;
+}
+
+void Translator::onOnlineStateChanged(bool online)
+{
+    qDebug("Online state: %u", online);
+    m_online = online;
+    if (!m_online) {
+        if (m_state == Generation || m_state == Translation)
+            requestOnlineState();
+    } else {
+        if (m_state == Generation)
+            randomWord();
+        else if (m_state == Translation)
+            iterateTranslation();
+    }
+}
+
+void Translator::requestOnlineState()
+{
+    QNetworkConfiguration conf = m_networkManager->defaultConfiguration();
+    if (conf.isValid()) {
+        qDebug() << "Using default configuration" << conf.name();
+    } else {
+        QList<QNetworkConfiguration> activeConfigs = m_networkManager->allConfigurations();
+        foreach (conf, activeConfigs) {
+            if (conf.state() & QNetworkConfiguration::Discovered ||
+                conf.state() & QNetworkConfiguration::Defined) {
+                qDebug() << "Using configuration" << conf.name();
+                break;
+            }
+        }
+    }
+    m_networkSession = new QNetworkSession(conf, this);
+    m_networkSession->open();
+}
+
+void Translator::requestOfflineState()
+{
+    if (m_networkSession) {
+        qDebug("Reqesting offline state");
+        if (m_networkSession->isOpen()) {
+            m_networkSession->stop();
+            connect(m_networkSession, SIGNAL(closed),
+                    m_networkSession, SLOT(deleteLater()));
+        } else {
+            m_networkSession->deleteLater();
+        }
+        m_networkSession = 0;
+    }
 }
 
 void Translator::onError()
@@ -70,7 +123,11 @@ void Translator::randomWord()
         m_dictionary.clear();
         m_words.clear();
         m_state = Generation;
-        m_translator->generateMultipleWords();
+        if (!m_online) {
+            requestOnlineState();
+        } else {
+            m_translator->generateMultipleWords();
+        }
 
         /* Prepare and expose view */
         if (!m_view) {
@@ -98,17 +155,18 @@ void Translator::onGenerated(const QMultiMap<TranslationHandler::Type,QString> &
 
 void Translator::iterateTranslation()
 {
-    if (m_dictionary.count() >= m_wordCount) {
-        m_state = Done;
-        m_words.clear();
-        makeGuess();
-    } else {
+    if (m_dictionary.count() < m_wordCount) {
         QMapIterator<TranslationHandler::Type,QString> i(m_words);
         if (i.hasNext()) {
             i.next();
             qDebug() << "Generated:" << i.value();
             translateWord(i.value(), i.key());
         }
+    } else {
+        m_state = Done;
+        m_words.clear();
+        requestOfflineState();
+        makeGuess();
     }
 }
 
