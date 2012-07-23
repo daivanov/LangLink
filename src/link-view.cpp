@@ -184,7 +184,7 @@ int LinkView::mapToPos(const QPointF &point) const
     return pos;
 }
 
-QPointF LinkView::mapFromPos(int pos, int levelShift) const
+QPointF LinkView::mapFromPos(qreal pos, qreal levelShift) const
 {
     return QPointF((pos + 0.5) * m_width,
                    (levelShift + m_activeLines + 0.5) * m_height);
@@ -217,19 +217,23 @@ void LinkView::appendTranslation(const QString &item, int pos)
         m_progressIndicator->stop();
         if (!m_hSeparator) {
             m_hSeparator =
-                new QGraphicsLineItem(0, m_height, (m_capacity + 1) * m_width, m_height);
+                new QGraphicsLineItem(QLineF(mapFromPos(-0.5, - m_activeLines + 0.5),
+                                             mapFromPos(m_capacity + 0.5, - m_activeLines + 0.5)));
             m_hSeparator->setPen(QPen(Qt::yellow));
             m_scene->addItem(m_hSeparator);
         } else {
-            m_hSeparator->setLine(0, m_height, (m_capacity + 1) * m_width, m_height);
+            m_hSeparator->setLine(QLineF(mapFromPos(-0.5, - m_activeLines + 0.5),
+                                         mapFromPos(m_capacity + 0.5, - m_activeLines + 0.5)));
         }
         if (!m_vSeparator) {
             m_vSeparator =
-                new QGraphicsLineItem(m_capacity * m_width, 0, m_capacity * m_width, 2 * m_height);
+                new QGraphicsLineItem(QLineF(mapFromPos(m_capacity - 0.5, - m_activeLines - 0.5),
+                                             mapFromPos(m_capacity - 0.5, 0.5)));
             m_vSeparator->setPen(QPen(Qt::yellow));
             m_scene->addItem(m_vSeparator);
         } else {
-            m_hSeparator->setLine(0, m_height, (m_capacity + 1) * m_width, m_height);
+            m_vSeparator->setLine(QLineF(mapFromPos(m_capacity - 0.5, - m_activeLines - 0.5),
+                                         mapFromPos(m_capacity - 0.5, 0.5)));
         }
         if (!m_button) {
             m_button = new LinkButton(m_height);
@@ -255,10 +259,7 @@ void LinkView::setOverallAssessment(int correct)
     if (correct == m_capacity) {
         //% "Congratulations!"
         LinkItem *greeting = new LinkItem(qtTrId("qtn_langlink_congrats"));
-        QPointF center = mapFromPos(m_capacity / 2);
-        if (m_capacity % 2 == 0)
-            center -= QPointF(m_width / 2, 0);
-        greeting->setCenterPos(center);
+        greeting->setCenterPos(mapFromPos(m_capacity / 2.0));
         m_scene->addItem(greeting);
         m_progressIndicator->setCount(QString::number(m_capacity));
     }
@@ -325,8 +326,8 @@ void LinkView::evaluateLine()
 
     /* Update scene */
     m_button->setCenterPos(mapFromPos(m_capacity));
-    m_vSeparator->setLine(m_capacity * m_width, 0, m_capacity * m_width,
-                          (m_activeLines + 1) * m_height);
+    m_vSeparator->setLine(QLineF(mapFromPos(m_capacity - 0.5, - m_activeLines - 0.5),
+                                 mapFromPos(m_capacity - 0.5, 0.5)));
 }
 
 void LinkView::captcha(const QWebPage *page)
