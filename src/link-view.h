@@ -59,6 +59,7 @@ signals:
 
 protected:
     bool eventFilter(QObject *obj, QEvent *event);
+    bool mouseEvent(QObject *obj, QGraphicsSceneMouseEvent *mouseEvent);
 
 private:
     int mapToPos(const QPointF &point) const;
@@ -66,21 +67,32 @@ private:
 
     QGraphicsScene *m_scene;
     QGraphicsView *m_view;
+
+    /* Data */
+    int m_capacity;
     QList<QGraphicsItem*> m_originalItems;
     QList<QGraphicsItem*> m_translatedItems;
     QHash<QString,LinkItem::State> m_savedStates;
+
+    /* UI items */
     QGraphicsLineItem *m_hSeparator;
     QGraphicsLineItem *m_vSeparator;
     LinkProgressIndicator *m_progressIndicator;
     LinkButton *m_button;
     LinkButton *m_closeButton;
+
+    /* Item motion handling */
     QGraphicsItem *m_movingItem;
     int m_originPos, m_gapPos;
     QPointF m_translation;
     qreal m_width, m_height;
     QTransform m_transform;
     qreal m_activeLines;
-    int m_capacity;
+
+    /* Gesture handling */
+    QPointF m_gestureOrigin;
+    bool m_possibleGesture;
+    bool m_gesture;
 };
 
 #endif // LINK_VIEW_H

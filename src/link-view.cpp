@@ -35,6 +35,7 @@ LinkView::LinkView(int capacity, QObject *parent)
     : QObject(parent),
     m_scene(new QGraphicsScene(this)),
     m_view(new QGraphicsView()),
+    m_capacity(capacity),
     m_hSeparator(0),
     m_vSeparator(0),
     m_progressIndicator(0),
@@ -42,13 +43,16 @@ LinkView::LinkView(int capacity, QObject *parent)
     m_closeButton(0),
     m_movingItem(0),
     m_activeLines(0),
-    m_capacity(capacity)
+    m_possibleGesture(false),
+    m_gesture(false)
 {
     m_scene->setBackgroundBrush(Qt::black);
     m_scene->installEventFilter(this);
 
     m_view->setWindowState(m_view->windowState() ^ Qt::WindowFullScreen);
     m_view->setScene(m_scene);
+    m_view->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    m_view->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 }
 
 LinkView::~LinkView()
@@ -74,6 +78,7 @@ bool LinkView::eventFilter(QObject *obj, QEvent *event)
     case QEvent::WindowActivate: {
         QRectF newSceneRect(QPointF(0.0, 0.0), m_view->maximumViewportSize());
         m_scene->setSceneRect(newSceneRect);
+        m_view->setSceneRect(newSceneRect);
         m_width = newSceneRect.width() / (m_capacity + 1);
         m_height = newSceneRect.height() / 10;
         m_transform.reset();
@@ -105,38 +110,55 @@ bool LinkView::eventFilter(QObject *obj, QEvent *event)
     }
         break;
     case QEvent::GraphicsSceneMousePress:
-        if (!m_movingItem) {
-            QGraphicsSceneMouseEvent *mouseEvent =
-                static_cast<QGraphicsSceneMouseEvent*>(event);
-            if (mouseEvent) {
-                QGraphicsItem *item =
-                   m_scene->itemAt(mouseEvent->scenePos(), m_transform);
-                if (item) {
-                    if (m_translatedItems.contains(item)) {
-                        m_movingItem = item;
-                        m_translation = m_movingItem->pos() - mouseEvent->scenePos();
-                        m_gapPos = m_originPos = mapToPos(m_movingItem->pos() +
-                                                          m_movingItem->boundingRect().center());
-                    } else {
-                        LinkItem *linkItem = dynamic_cast<LinkItem*>(item);
-                        if (linkItem)
-                            linkItem->setNextState();
-                    }
+    case QEvent::GraphicsSceneMouseMove:
+    case QEvent::GraphicsSceneMouseRelease: {
+        QGraphicsSceneMouseEvent *sceneMouseEvent =
+            static_cast<QGraphicsSceneMouseEvent*>(event);
+        if (sceneMouseEvent)
+            return mouseEvent(obj, sceneMouseEvent);
+        break;
+    }
+    default:
+        break;
+    }
+    // standard event processing
+    return QObject::eventFilter(obj, event);
+}
+
+bool LinkView::mouseEvent(QObject *obj, QGraphicsSceneMouseEvent *mouseEvent)
+{
+    switch (mouseEvent->type()) {
+    case QEvent::GraphicsSceneMousePress: {
+        QGraphicsItem *item =
+            m_scene->itemAt(mouseEvent->scenePos(), m_transform);
+        if (item) {
+            if (!m_movingItem) {
+                if (m_translatedItems.contains(item)) {
+                    m_movingItem = item;
+                    m_translation = m_movingItem->pos() - mouseEvent->scenePos();
+                    m_gapPos = m_originPos = mapToPos(m_movingItem->pos() +
+                    m_movingItem->boundingRect().center());
+                } else {
+                    LinkItem *linkItem = dynamic_cast<LinkItem*>(item);
+                    if (linkItem)
+                        linkItem->setNextState();
                 }
             }
+        } else {
+            m_gestureOrigin = mouseEvent->scenePos();
+            m_possibleGesture = true;
         }
         break;
+    }
     case QEvent::GraphicsSceneMouseMove:
         if (m_movingItem) {
             LinkItem *linkItem = dynamic_cast<LinkItem*>(m_movingItem);
-            QGraphicsSceneMouseEvent *mouseEvent =
-                static_cast<QGraphicsSceneMouseEvent*>(event);
-            if (mouseEvent && linkItem) {
+            if (linkItem) {
                 linkItem->setPos(mouseEvent->scenePos() + m_translation);
                 int pos = mapToPos(linkItem->center());
                 if (pos != m_gapPos) {
                     QGraphicsItem *item =
-                        m_scene->itemAt(mapFromPos(pos), m_transform);
+                    m_scene->itemAt(mapFromPos(pos), m_transform);
                     if (item == m_movingItem) {
                         QList<QGraphicsItem*> collidingItems = m_scene->collidingItems(m_movingItem);
                         if (!collidingItems.isEmpty()) {
@@ -153,6 +175,29 @@ bool LinkView::eventFilter(QObject *obj, QEvent *event)
                     }
                 }
             }
+        } else {
+            QPointF translation = m_gestureOrigin - mouseEvent->scenePos();
+            if (m_possibleGesture) {
+                if (qAbs(translation.y()) > 0.5 * qAbs(translation.x()))
+                    m_gesture = true;
+                m_possibleGesture = false;
+            }
+
+            if (m_gesture) {
+                QRectF sceneRect = m_scene->sceneRect();
+                QRectF newViewRect = m_view->sceneRect();
+                qreal dy;
+                if (translation.y() > 0.0) {
+                    qreal up = sceneRect.bottom() - newViewRect.bottom();
+                    dy = qMin(up, translation.y());
+                } else {
+                    qreal down = sceneRect.top() - newViewRect.top();
+                    dy = qMax(down, translation.y());
+                }
+                newViewRect.translate(0.0, dy);
+                m_view->setSceneRect(newViewRect);
+                m_gestureOrigin = mouseEvent->scenePos();
+            }
         }
         break;
     case QEvent::GraphicsSceneMouseRelease:
@@ -165,13 +210,16 @@ bool LinkView::eventFilter(QObject *obj, QEvent *event)
                 }
             }
             m_movingItem = 0;
+        } else {
+            m_possibleGesture = false;
+            m_gesture = false;
         }
         break;
     default:
         break;
     }
     // standard event processing
-    return QObject::eventFilter(obj, event);
+    return QObject::eventFilter(obj, mouseEvent);
 }
 
 int LinkView::mapToPos(const QPointF &point) const
@@ -292,6 +340,7 @@ void LinkView::clear()
     m_originalItems.clear();
     QRectF newSceneRect(QPointF(0.0, 0.0), m_view->maximumViewportSize());
     m_scene->setSceneRect(newSceneRect);
+    m_view->setSceneRect(newSceneRect);
 }
 
 void LinkView::evaluateLine()
@@ -320,6 +369,9 @@ void LinkView::evaluateLine()
     if (sceneRect.height() < (m_activeLines + 1) * m_height) {
         sceneRect.setHeight((m_activeLines + 1) * m_height);
         m_scene->setSceneRect(sceneRect);
+        QRectF viewRect = m_view->sceneRect();
+        viewRect.translate(0.0, m_height);
+        m_view->setSceneRect(viewRect);
     }
 
     emit result(translations.values());
