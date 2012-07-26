@@ -50,6 +50,7 @@ LinkView::LinkView(int capacity, QObject *parent)
     m_scene->installEventFilter(this);
 
     m_view->setWindowState(m_view->windowState() ^ Qt::WindowFullScreen);
+    m_view->setFrameShape(QFrame::NoFrame);
     m_view->setScene(m_scene);
     m_view->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     m_view->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
