@@ -80,7 +80,7 @@ bool LinkView::eventFilter(QObject *obj, QEvent *event)
         QRectF newSceneRect(QPointF(0.0, 0.0), m_view->maximumViewportSize());
         m_scene->setSceneRect(newSceneRect);
         m_view->setSceneRect(newSceneRect);
-        m_width = newSceneRect.width() / 8;
+        m_width = newSceneRect.width() / 3;
         m_height = newSceneRect.height() / (m_capacity + 1);
         m_transform.reset();
         m_transform.rotate(-qAsin(m_height / m_width) / M_PI * 180);
@@ -138,7 +138,7 @@ bool LinkView::mouseEvent(QObject *obj, QGraphicsSceneMouseEvent *mouseEvent)
                     m_movingItem = item;
                     m_translation = m_movingItem->pos() - mouseEvent->scenePos();
                     m_gapPos = m_originPos = mapToPos(m_movingItem->pos() +
-                    m_movingItem->boundingRect().center());
+                        m_movingItem->boundingRect().center());
                 } else {
                     LinkItem *linkItem = dynamic_cast<LinkItem*>(item);
                     if (linkItem)
@@ -146,7 +146,7 @@ bool LinkView::mouseEvent(QObject *obj, QGraphicsSceneMouseEvent *mouseEvent)
                 }
             }
         } else {
-            m_gestureOrigin = mouseEvent->scenePos();
+            m_gestureOrigin = mouseEvent->screenPos();
             m_possibleGesture = true;
         }
         break;
@@ -177,7 +177,7 @@ bool LinkView::mouseEvent(QObject *obj, QGraphicsSceneMouseEvent *mouseEvent)
                 }
             }
         } else {
-            QPointF translation = m_gestureOrigin - mouseEvent->scenePos();
+            QPointF translation = m_gestureOrigin - mouseEvent->screenPos();
             if (m_possibleGesture) {
                 if (qAbs(translation.x()) > 0.5 * qAbs(translation.y()))
                     m_gesture = true;
@@ -197,7 +197,7 @@ bool LinkView::mouseEvent(QObject *obj, QGraphicsSceneMouseEvent *mouseEvent)
                 }
                 newViewRect.translate(dx, 0.0);
                 m_view->setSceneRect(newViewRect);
-                m_gestureOrigin = mouseEvent->scenePos();
+                m_gestureOrigin = mouseEvent->screenPos();
             }
         }
         break;
