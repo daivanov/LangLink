@@ -80,8 +80,8 @@ bool LinkView::eventFilter(QObject *obj, QEvent *event)
         QRectF newSceneRect(QPointF(0.0, 0.0), m_view->maximumViewportSize());
         m_scene->setSceneRect(newSceneRect);
         m_view->setSceneRect(newSceneRect);
-        m_width = newSceneRect.width() / (m_capacity + 1);
-        m_height = newSceneRect.height() / 10;
+        m_width = newSceneRect.width() / 8;
+        m_height = newSceneRect.height() / (m_capacity + 1);
         m_transform.reset();
         m_transform.rotate(-qAsin(m_height / m_width) / M_PI * 180);
         if (!m_closeButton) {
@@ -96,14 +96,14 @@ bool LinkView::eventFilter(QObject *obj, QEvent *event)
                   << QPointF(0.25, 1.0) << QPointF(0.0, 0.75)
                   << QPointF(0.25, 0.5);
             m_closeButton->setPolygon(shape);
-            m_closeButton->setCenterPos(mapFromPos(m_capacity));
+            m_closeButton->setCenterPos(mapFromPos(-1));
             m_scene->addItem(m_closeButton);
             connect(m_closeButton, SIGNAL(clicked()),
                     qApp, SLOT(quit()));
         }
         if (!m_progressIndicator) {
             m_progressIndicator =
-                new LinkProgressIndicator(QString::number(m_capacity), m_width);
+                new LinkProgressIndicator(QString::number(m_capacity), 2 * m_height);
             m_progressIndicator->setCenterPos(m_scene->sceneRect().center());
             m_scene->addItem(m_progressIndicator);
             m_progressIndicator->start();
@@ -158,18 +158,18 @@ bool LinkView::mouseEvent(QObject *obj, QGraphicsSceneMouseEvent *mouseEvent)
                 linkItem->setPos(mouseEvent->scenePos() + m_translation);
                 int pos = mapToPos(linkItem->center());
                 if (pos != m_gapPos) {
-                    QGraphicsItem *item =
-                    m_scene->itemAt(mapFromPos(pos), m_transform);
-                    if (item == m_movingItem) {
-                        QList<QGraphicsItem*> collidingItems = m_scene->collidingItems(m_movingItem);
-                        if (!collidingItems.isEmpty()) {
-                            item = dynamic_cast<LinkItem*>(collidingItems.first());
-                        } else {
-                            qCritical("Can't find colliding item");
-                            item = 0;
+                    QList<QGraphicsItem*> items = m_scene->items(mapFromPos(pos),
+                        Qt::IntersectsItemBoundingRect, Qt::DescendingOrder, 
+                        m_transform);
+                    QGraphicsItem *item2 = 0;
+                    foreach (QGraphicsItem *item, items)
+                        if (item != m_movingItem) {
+                            item2 = item;
+                            break;
                         }
-                    }
-                    LinkItem *linkItem2 = dynamic_cast<LinkItem*>(item);
+                    if (!item2)
+                        qCritical("Can't find colliding item");
+                    LinkItem *linkItem2 = dynamic_cast<LinkItem*>(item2);
                     if (linkItem2 && linkItem2->state() != LinkItem::Correct) {
                         linkItem2->setCenterPos(mapFromPos(m_gapPos));
                         m_gapPos = pos;
@@ -179,7 +179,7 @@ bool LinkView::mouseEvent(QObject *obj, QGraphicsSceneMouseEvent *mouseEvent)
         } else {
             QPointF translation = m_gestureOrigin - mouseEvent->scenePos();
             if (m_possibleGesture) {
-                if (qAbs(translation.y()) > 0.5 * qAbs(translation.x()))
+                if (qAbs(translation.x()) > 0.5 * qAbs(translation.y()))
                     m_gesture = true;
                 m_possibleGesture = false;
             }
@@ -187,15 +187,15 @@ bool LinkView::mouseEvent(QObject *obj, QGraphicsSceneMouseEvent *mouseEvent)
             if (m_gesture) {
                 QRectF sceneRect = m_scene->sceneRect();
                 QRectF newViewRect = m_view->sceneRect();
-                qreal dy;
-                if (translation.y() > 0.0) {
-                    qreal up = sceneRect.bottom() - newViewRect.bottom();
-                    dy = qMin(up, translation.y());
+                qreal dx;
+                if (translation.x() > 0.0) {
+                    qreal right = sceneRect.right() - newViewRect.right();
+                    dx = qMin(right, translation.x());
                 } else {
-                    qreal down = sceneRect.top() - newViewRect.top();
-                    dy = qMax(down, translation.y());
+                    qreal left = sceneRect.left() - newViewRect.left();
+                    dx = qMax(left, translation.x());
                 }
-                newViewRect.translate(0.0, dy);
+                newViewRect.translate(dx, 0.0);
                 m_view->setSceneRect(newViewRect);
                 m_gestureOrigin = mouseEvent->scenePos();
             }
@@ -225,7 +225,7 @@ bool LinkView::mouseEvent(QObject *obj, QGraphicsSceneMouseEvent *mouseEvent)
 
 int LinkView::mapToPos(const QPointF &point) const
 {
-    int pos = qFloor(point.x() / m_width);
+    int pos = qFloor(point.y() / m_height) - 1;
     if (pos >= m_capacity)
         pos = m_capacity - 1;
     else if (pos < 0)
@@ -235,8 +235,8 @@ int LinkView::mapToPos(const QPointF &point) const
 
 QPointF LinkView::mapFromPos(qreal pos, qreal levelShift) const
 {
-    return QPointF((pos + 0.5) * m_width,
-                   (levelShift + m_activeLines + 0.5) * m_height);
+    return QPointF((levelShift + m_activeLines + 0.5) * m_width,
+                   (pos + 1.5) * m_height);
 }
 
 void LinkView::appendOriginal(const QString &item)
@@ -266,35 +266,35 @@ void LinkView::appendTranslation(const QString &item, int pos)
         m_progressIndicator->stop();
         if (!m_hSeparator) {
             m_hSeparator =
-                new QGraphicsLineItem(QLineF(mapFromPos(-0.5, - m_activeLines + 0.5),
+                new QGraphicsLineItem(QLineF(mapFromPos(-1.5, - m_activeLines + 0.5),
                                              mapFromPos(m_capacity + 0.5, - m_activeLines + 0.5)));
             m_hSeparator->setPen(QPen(Qt::yellow));
             m_scene->addItem(m_hSeparator);
         } else {
-            m_hSeparator->setLine(QLineF(mapFromPos(-0.5, - m_activeLines + 0.5),
+            m_hSeparator->setLine(QLineF(mapFromPos(-1.5, - m_activeLines + 0.5),
                                          mapFromPos(m_capacity + 0.5, - m_activeLines + 0.5)));
         }
         if (!m_vSeparator) {
             m_vSeparator =
-                new QGraphicsLineItem(QLineF(mapFromPos(m_capacity - 0.5, - m_activeLines - 0.5),
-                                             mapFromPos(m_capacity - 0.5, 0.5)));
+                new QGraphicsLineItem(QLineF(mapFromPos(-0.5, - m_activeLines - 0.5),
+                                             mapFromPos(-0.5, 0.5)));
             m_vSeparator->setPen(QPen(Qt::yellow));
             m_scene->addItem(m_vSeparator);
         } else {
-            m_vSeparator->setLine(QLineF(mapFromPos(m_capacity - 0.5, - m_activeLines - 0.5),
-                                         mapFromPos(m_capacity - 0.5, 0.5)));
+            m_vSeparator->setLine(QLineF(mapFromPos(-0.5, - m_activeLines - 0.5),
+                                         mapFromPos(-0.5, 0.5)));
         }
         if (!m_button) {
             m_button = new LinkButton(m_height);
             QPolygonF shape;
-            shape << QPointF(0.0, 0.0) << QPointF(0.5, 1.0) << QPointF(1.0, 0.0);
+            shape << QPointF(0.0, 0.0) << QPointF(1.0, 0.5) << QPointF(0.0, 1.0);
             m_button->setPolygon(shape);
-            m_button->setCenterPos(mapFromPos(m_capacity));
+            m_button->setCenterPos(mapFromPos(-1));
             m_scene->addItem(m_button);
             connect(m_button, SIGNAL(clicked()),
                     SLOT(evaluateLine()));
         } else {
-            m_button->setCenterPos(mapFromPos(m_capacity));
+            m_button->setCenterPos(mapFromPos(-1));
             m_button->show();
         }
     }
@@ -303,12 +303,12 @@ void LinkView::appendTranslation(const QString &item, int pos)
 void LinkView::setOverallAssessment(int correct)
 {
     LinkItem *assessment = new LinkItem(QString::number(correct));
-    assessment->setCenterPos(mapFromPos(m_capacity, -1));
+    assessment->setCenterPos(mapFromPos(-1, -1));
     m_scene->addItem(assessment);
     if (correct == m_capacity) {
         //% "Congratulations!"
         LinkItem *greeting = new LinkItem(qtTrId("qtn_langlink_congrats"));
-        greeting->setCenterPos(mapFromPos(m_capacity / 2.0));
+        greeting->setCenterPos(mapFromPos((m_capacity - 1) / 2.0));
         m_scene->addItem(greeting);
         m_progressIndicator->setCount(QString::number(m_capacity));
     }
@@ -357,7 +357,7 @@ void LinkView::evaluateLine()
         QGraphicsItem *item = m_translatedItems.takeFirst();
         LinkItem *linkItem = dynamic_cast<LinkItem*>(item);
         if (linkItem) {
-            translations.insert(linkItem->pos().x(),
+            translations.insert(linkItem->pos().y(),
                                 QPair<int,QString>(origin, linkItem->text()));
             m_savedStates.insert(linkItem->text(), linkItem->state());
         }
@@ -367,20 +367,20 @@ void LinkView::evaluateLine()
     /* Prepare data for next iteration */
     m_activeLines++;
     QRectF sceneRect = m_scene->sceneRect();
-    if (sceneRect.height() < (m_activeLines + 1) * m_height) {
-        sceneRect.setHeight((m_activeLines + 1) * m_height);
+    if (sceneRect.width() < (m_activeLines + 1) * m_width) {
+        sceneRect.setWidth((m_activeLines + 1) * m_width);
         m_scene->setSceneRect(sceneRect);
         QRectF viewRect = m_view->sceneRect();
-        viewRect.translate(0.0, m_height);
+        viewRect.translate(m_width, 0.0);
         m_view->setSceneRect(viewRect);
     }
 
     emit result(translations.values());
 
     /* Update scene */
-    m_button->setCenterPos(mapFromPos(m_capacity));
-    m_vSeparator->setLine(QLineF(mapFromPos(m_capacity - 0.5, - m_activeLines - 0.5),
-                                 mapFromPos(m_capacity - 0.5, 0.5)));
+    m_button->setCenterPos(mapFromPos(-1));
+    m_vSeparator->setLine(QLineF(mapFromPos(-0.5, - m_activeLines - 0.5),
+                                 mapFromPos(-0.5, 0.5)));
 }
 
 void LinkView::captcha(const QWebPage *page)
