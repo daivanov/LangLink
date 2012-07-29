@@ -23,6 +23,7 @@
 #include <QDebug>
 
 #include "link-progress-indicator.h"
+#include "link-item.h"
 
 #define BALL_RELATIVE_SIZE 0.3
 
@@ -31,13 +32,13 @@ LinkProgressIndicator::LinkProgressIndicator(const QString &count,
     m_timer(new QTimer(this)),
     m_i(0)
 {
-    m_text = new QGraphicsSimpleTextItem(count);
-    m_text->setBrush(Qt::yellow);
-    m_text->setPen(QPen(Qt::yellow));
+    m_text = new LinkItem(count);
     QFont font = m_text->font();
     font.setPixelSize(scalingFactor);
     m_text->setFont(font);
-    m_text->setPos(QPointF(0.0, 0.0) - m_text->boundingRect().bottomRight() / 2);
+    m_text->setBrush(Qt::yellow);
+    m_text->setPen(QPen(Qt::yellow));
+    m_text->setCenterPos(QPointF(0.0, 0.0));
     addToGroup(m_text);
 
     QGraphicsEllipseItem *item;
@@ -89,7 +90,7 @@ void LinkProgressIndicator::tick()
 void LinkProgressIndicator::setCount(const QString &count)
 {
     m_text->setText(count);
-    m_text->setPos(QPointF(0.0, 0.0) - m_text->boundingRect().bottomRight() / 2);
+    m_text->setCenterPos(QPointF(0.0, 0.0));
 }
 
 void LinkProgressIndicator::setCenterPos(const QPointF &pos)

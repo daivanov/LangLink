@@ -43,6 +43,9 @@ public:
     QPointF center() const;
     void setCenterPos(const QPointF &pos);
 
+    void setFont(const QFont &font);
+    void setText(const QString &text);
+
 private:
     State m_state;
     QPointF m_center;

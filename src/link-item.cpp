@@ -56,6 +56,18 @@ LinkItem::~LinkItem()
 {
 }
 
+void LinkItem::setFont(const QFont &font)
+{
+    QGraphicsSimpleTextItem::setFont(font);
+    m_center = boundingRect().center();
+}
+
+void LinkItem::setText(const QString &text)
+{
+    QGraphicsSimpleTextItem::setText(text);
+    m_center = boundingRect().center();
+}
+
 LinkItem::State LinkItem::state() const
 {
     return m_state;

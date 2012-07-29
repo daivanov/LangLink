@@ -25,6 +25,7 @@
 
 class QTimer;
 class QGraphicsItem;
+class LinkItem;
 
 class LinkProgressIndicator : public QObject, public QGraphicsItemGroup
 {
@@ -47,7 +48,7 @@ private slots:
 private:
     QTimer *m_timer;
     QList<QGraphicsItem*> m_items;
-    QGraphicsSimpleTextItem *m_text;
+    LinkItem *m_text;
     int m_i;
 };
 

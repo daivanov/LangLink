@@ -324,7 +324,7 @@ void LinkView::clear()
     QList<QGraphicsItem*> items = m_scene->items();
     foreach(QGraphicsItem *item, items) {
         LinkItem *linkItem = dynamic_cast<LinkItem*>(item);
-        if (linkItem) {
+        if (linkItem && linkItem->parentItem() == 0) {
             m_scene->removeItem(linkItem);
             delete linkItem;
         }
