@@ -1,4 +1,5 @@
 opt/langlink/bin/langlink
 opt/langlink/bin/translation/*.qm
+opt/langlink/bin/fonts/*.ttf
 usr/share/applications/langlink.desktop
 usr/share/themes/base/meegotouch/icons/*

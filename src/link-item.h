@@ -46,6 +46,8 @@ public:
 private:
     State m_state;
     QPointF m_center;
+    static QFont m_font;
+    static bool m_fontInitialized;
 };
 
 #endif // LINK_ITEM_H

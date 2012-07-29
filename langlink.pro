@@ -1,6 +1,6 @@
 CONFIG += ordered
 TEMPLATE = subdirs
-SUBDIRS = src translation data
+SUBDIRS = src translation data fonts
 
 OTHER_FILES += \
     debian/rules \
