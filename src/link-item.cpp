@@ -109,7 +109,7 @@ void LinkItem::setNextState()
     }
 }
 
-QPointF LinkItem::center() const
+QPointF LinkItem::centerPos() const
 {
     return pos() + transform().map(m_center);
 }

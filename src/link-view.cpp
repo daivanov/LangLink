@@ -31,6 +31,8 @@
 #include "link-button.h"
 #include "link-view.h"
 
+#define ROWS_PER_SCREEN 4
+
 LinkView::LinkView(int capacity, QObject *parent)
     : QObject(parent),
     m_scene(new QGraphicsScene(this)),
@@ -80,7 +82,7 @@ bool LinkView::eventFilter(QObject *obj, QEvent *event)
         QRectF newSceneRect(QPointF(0.0, 0.0), m_view->maximumViewportSize());
         m_scene->setSceneRect(newSceneRect);
         m_view->setSceneRect(newSceneRect);
-        m_width = newSceneRect.width() / 3;
+        m_width = newSceneRect.width() / ROWS_PER_SCREEN;
         m_height = newSceneRect.height() / (m_capacity + 1);
         m_transform.reset();
         m_transform.rotate(-qAsin(m_height / m_width) / M_PI * 180);
@@ -131,18 +133,18 @@ bool LinkView::mouseEvent(QObject *obj, QGraphicsSceneMouseEvent *mouseEvent)
     switch (mouseEvent->type()) {
     case QEvent::GraphicsSceneMousePress: {
         QGraphicsItem *item =
-            m_scene->itemAt(mouseEvent->scenePos(), m_transform);
+            m_scene->itemAt(mouseEvent->scenePos(), QTransform());
         if (item) {
             if (!m_movingItem) {
-                if (m_translatedItems.contains(item)) {
-                    m_movingItem = item;
-                    m_translation = m_movingItem->pos() - mouseEvent->scenePos();
-                    m_gapPos = m_originPos = mapToPos(m_movingItem->pos() +
-                        m_movingItem->boundingRect().center());
-                } else {
-                    LinkItem *linkItem = dynamic_cast<LinkItem*>(item);
-                    if (linkItem)
+                LinkItem *linkItem = dynamic_cast<LinkItem*>(item);
+                if (linkItem) {
+                    if (m_translatedItems.contains(item)) {
+                        m_movingItem = item;
+                        m_translation = m_movingItem->pos() - mouseEvent->scenePos();
+                        m_gapPos = m_originPos = mapToPos(linkItem->centerPos());
+                    } else {
                         linkItem->setNextState();
+                    }
                 }
             }
         } else {
@@ -156,11 +158,11 @@ bool LinkView::mouseEvent(QObject *obj, QGraphicsSceneMouseEvent *mouseEvent)
             LinkItem *linkItem = dynamic_cast<LinkItem*>(m_movingItem);
             if (linkItem) {
                 linkItem->setPos(mouseEvent->scenePos() + m_translation);
-                int pos = mapToPos(linkItem->center());
+                int pos = mapToPos(linkItem->centerPos());
                 if (pos != m_gapPos) {
                     QList<QGraphicsItem*> items = m_scene->items(mapFromPos(pos),
                         Qt::IntersectsItemBoundingRect, Qt::DescendingOrder, 
-                        m_transform);
+                        QTransform());
                     QGraphicsItem *item2 = 0;
                     foreach (QGraphicsItem *item, items)
                         if (item != m_movingItem) {

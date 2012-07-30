@@ -40,7 +40,7 @@ public:
     void setState(State state);
     void setNextState();
 
-    QPointF center() const;
+    QPointF centerPos() const;
     void setCenterPos(const QPointF &pos);
 
     void setFont(const QFont &font);
