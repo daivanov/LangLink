@@ -19,32 +19,22 @@
 
 #include <QGraphicsScene>
 #include <QFontDatabase>
+#include <QFontMetrics>
 #include <QCoreApplication>
 #include <QDebug>
 
 #include "link-item.h"
 
 QFont LinkItem::m_font;
+QFontMetrics LinkItem::m_fontMetrics(LinkItem::m_font);
 bool LinkItem::m_fontInitialized = false;
 
 LinkItem::LinkItem(const QString & text, QGraphicsItem *parent)
     : QGraphicsSimpleTextItem(text, parent),
     m_state(Inactive)
 {
-    if (!m_fontInitialized) {
-        m_fontInitialized = true;
-        QString fontFile = QCoreApplication::applicationDirPath() +
-            "/../fonts/foo.ttf";
-        if (QFontDatabase::addApplicationFont(fontFile) != -1) {
-            QFontDatabase database;
-            m_font = database.font("Foo", "Regular", 25);
-        } else {
-            qCritical("Cannot find the font file %s", qPrintable(fontFile));
-            m_font.setPixelSize(20);
-        }
-
-        m_font.setBold(true);
-    }
+    if (!m_fontInitialized)
+        initFont();
 
     setBrush(Qt::white);
     setFont(m_font);
@@ -117,4 +107,30 @@ QPointF LinkItem::centerPos() const
 void LinkItem::setCenterPos(const QPointF &pos)
 {
     setPos(pos - transform().map(m_center));
+}
+
+void LinkItem::initFont()
+{
+    QString fontFile = QCoreApplication::applicationDirPath() +
+        "/../fonts/foo.ttf";
+    if (QFontDatabase::addApplicationFont(fontFile) != -1) {
+        QFontDatabase database;
+        m_font = database.font("Foo", "Regular", 25);
+    } else {
+        qCritical("Cannot find the font file %s", qPrintable(fontFile));
+        m_font.setPixelSize(20);
+    }
+
+    m_font.setBold(true);
+    m_fontMetrics = QFontMetrics(m_font);
+
+    m_fontInitialized = true;
+}
+
+int LinkItem::width(const QString &text, int len)
+{
+    if (!m_fontInitialized)
+        initFont();
+
+    return m_fontMetrics.width(text, len);
 }

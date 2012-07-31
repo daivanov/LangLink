@@ -46,10 +46,15 @@ public:
     void setFont(const QFont &font);
     void setText(const QString &text);
 
+    static int width(const QString &text, int len = -1);
+
 private:
+    static void initFont();
+
     State m_state;
     QPointF m_center;
     static QFont m_font;
+    static QFontMetrics m_fontMetrics;
     static bool m_fontInitialized;
 };
 
