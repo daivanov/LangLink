@@ -98,7 +98,7 @@ bool LinkView::eventFilter(QObject *obj, QEvent *event)
                   << QPointF(0.25, 1.0) << QPointF(0.0, 0.75)
                   << QPointF(0.25, 0.5);
             m_closeButton->setPolygon(shape);
-            m_closeButton->setCenterPos(mapFromPos(-1));
+            m_closeButton->setCenterPos(mapFromPos(-1, -1));
             m_scene->addItem(m_closeButton);
             connect(m_closeButton, SIGNAL(clicked()),
                     qApp, SLOT(quit()));
@@ -237,7 +237,7 @@ int LinkView::mapToPos(const QPointF &point) const
 
 QPointF LinkView::mapFromPos(qreal pos, qreal levelShift) const
 {
-    return QPointF((levelShift + m_activeLines + 0.5) * m_width,
+    return QPointF((levelShift + 1.5) * m_width,
                    (pos + 1.5) * m_height);
 }
 
@@ -268,23 +268,23 @@ void LinkView::appendTranslation(const QString &item, int pos)
         m_progressIndicator->stop();
         if (!m_hSeparator) {
             m_hSeparator =
-                new QGraphicsLineItem(QLineF(mapFromPos(-1.5, - m_activeLines + 0.5),
-                                             mapFromPos(m_capacity + 0.5, - m_activeLines + 0.5)));
+                new QGraphicsLineItem(QLineF(mapFromPos(-1.5, -0.5),
+                                             mapFromPos(m_capacity + 0.5, -0.5)));
             m_hSeparator->setPen(QPen(Qt::yellow));
             m_scene->addItem(m_hSeparator);
         } else {
-            m_hSeparator->setLine(QLineF(mapFromPos(-1.5, - m_activeLines + 0.5),
-                                         mapFromPos(m_capacity + 0.5, - m_activeLines + 0.5)));
+            m_hSeparator->setLine(QLineF(mapFromPos(-1.5, -0.5),
+                                         mapFromPos(m_capacity + 0.5, -0.5)));
         }
         if (!m_vSeparator) {
             m_vSeparator =
-                new QGraphicsLineItem(QLineF(mapFromPos(-0.5, - m_activeLines - 0.5),
-                                             mapFromPos(-0.5, 0.5)));
+                new QGraphicsLineItem(QLineF(mapFromPos(-0.5, -1.5),
+                                             mapFromPos(-0.5, m_activeLines - 0.5)));
             m_vSeparator->setPen(QPen(Qt::yellow));
             m_scene->addItem(m_vSeparator);
         } else {
-            m_vSeparator->setLine(QLineF(mapFromPos(-0.5, - m_activeLines - 0.5),
-                                         mapFromPos(-0.5, 0.5)));
+            m_vSeparator->setLine(QLineF(mapFromPos(-0.5, -1.5),
+                                         mapFromPos(-0.5, m_activeLines - 0.5)));
         }
         if (!m_button) {
             m_button = new LinkButton(m_height);
@@ -305,7 +305,7 @@ void LinkView::appendTranslation(const QString &item, int pos)
 void LinkView::setOverallAssessment(int correct)
 {
     LinkItem *assessment = new LinkItem(QString::number(correct));
-    assessment->setCenterPos(mapFromPos(-1, -1));
+    assessment->setCenterPos(mapFromPos(-1, 1));
     m_scene->addItem(assessment);
     if (correct == m_capacity) {
         //% "Congratulations!"
@@ -372,17 +372,20 @@ void LinkView::evaluateLine()
     if (sceneRect.width() < (m_activeLines + 1) * m_width) {
         sceneRect.setWidth((m_activeLines + 1) * m_width);
         m_scene->setSceneRect(sceneRect);
-        QRectF viewRect = m_view->sceneRect();
-        viewRect.translate(m_width, 0.0);
-        m_view->setSceneRect(viewRect);
     }
 
-    emit result(translations.values());
-
     /* Update scene */
-    m_button->setCenterPos(mapFromPos(-1));
-    m_vSeparator->setLine(QLineF(mapFromPos(-0.5, - m_activeLines - 0.5),
-                                 mapFromPos(-0.5, 0.5)));
+    QList<QGraphicsItem*> items = m_scene->items();
+    foreach(QGraphicsItem *item, items) {
+        LinkItem *linkItem = dynamic_cast<LinkItem*>(item);
+        if (linkItem && linkItem->centerPos().x() > m_width) {
+            linkItem->setCenterPos(linkItem->centerPos() + QPointF(m_width, 0.0));
+        }
+    }
+    m_vSeparator->setLine(QLineF(mapFromPos(-0.5, -1.5),
+                                 mapFromPos(-0.5, m_activeLines - 0.5)));
+
+    emit result(translations.values());
 }
 
 void LinkView::captcha(const QWebPage *page)
