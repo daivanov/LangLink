@@ -23,6 +23,8 @@
 #include <QGraphicsSimpleTextItem>
 #include <QPointF>
 
+#define ITEM_FONTSIZE 25
+
 class LinkItem : public QGraphicsSimpleTextItem
 {
 public:

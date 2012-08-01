@@ -50,12 +50,14 @@ void LinkItem::setFont(const QFont &font)
 {
     QGraphicsSimpleTextItem::setFont(font);
     m_center = boundingRect().center();
+    setTransformOriginPoint(m_center);
 }
 
 void LinkItem::setText(const QString &text)
 {
     QGraphicsSimpleTextItem::setText(text);
     m_center = boundingRect().center();
+    setTransformOriginPoint(m_center);
 }
 
 LinkItem::State LinkItem::state() const
@@ -115,10 +117,10 @@ void LinkItem::initFont()
         "/../fonts/foo.ttf";
     if (QFontDatabase::addApplicationFont(fontFile) != -1) {
         QFontDatabase database;
-        m_font = database.font("Foo", "Regular", 25);
+        m_font = database.font("Foo", "Regular", ITEM_FONTSIZE);
     } else {
         qCritical("Cannot find the font file %s", qPrintable(fontFile));
-        m_font.setPixelSize(20);
+        m_font.setPixelSize(ITEM_FONTSIZE);
     }
 
     m_font.setBold(true);
