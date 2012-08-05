@@ -31,7 +31,7 @@
 #include "link-button.h"
 #include "link-view.h"
 
-#define ROWS_PER_SCREEN 4
+#define ROWS_PER_SCREEN 15
 
 LinkView::LinkView(int capacity, QObject *parent)
     : QObject(parent),
@@ -63,6 +63,28 @@ LinkView::~LinkView()
     delete m_view;
 }
 
+void LinkView::setupItem(const QString &item)
+{
+    qreal angle;
+    if (!item.isEmpty()) {
+        int width = LinkItem::width(item);
+        angle = qAsin(m_height / (width + ITEM_FONTSIZE));
+        qreal rotatedWidth = width * cos(angle) + ITEM_FONTSIZE * sin(angle);
+        if (m_width < rotatedWidth) {
+            m_transform.reset();
+            m_transform.rotateRadians(-angle);
+            adjustItems(rotatedWidth - m_width, 0.0);
+            m_width = rotatedWidth;
+        }
+    } else {
+        m_width = m_view->sceneRect().width() / ROWS_PER_SCREEN;
+        angle = qAsin(m_height / m_width);
+        m_transform.reset();
+        m_transform.rotateRadians(-angle);
+    }
+
+}
+
 bool LinkView::eventFilter(QObject *obj, QEvent *event)
 {
     if (obj != m_scene) {
@@ -82,10 +104,8 @@ bool LinkView::eventFilter(QObject *obj, QEvent *event)
         QRectF newSceneRect(QPointF(0.0, 0.0), m_view->maximumViewportSize());
         m_scene->setSceneRect(newSceneRect);
         m_view->setSceneRect(newSceneRect);
-        m_width = newSceneRect.width() / ROWS_PER_SCREEN;
         m_height = newSceneRect.height() / (m_capacity + 1);
-        m_transform.reset();
-        m_transform.rotate(-qAsin(m_height / m_width) / M_PI * 180);
+        setupItem();
         if (!m_closeButton) {
             m_closeButton = new LinkButton(m_height);
             QPolygonF shape;
@@ -98,7 +118,7 @@ bool LinkView::eventFilter(QObject *obj, QEvent *event)
                   << QPointF(0.25, 1.0) << QPointF(0.0, 0.75)
                   << QPointF(0.25, 0.5);
             m_closeButton->setPolygon(shape);
-            m_closeButton->setCenterPos(mapFromPos(-1, -1));
+            m_closeButton->setCenterPos(QPointF(m_height / 2, m_height / 2));
             m_scene->addItem(m_closeButton);
             connect(m_closeButton, SIGNAL(clicked()),
                     qApp, SLOT(quit()));
@@ -241,8 +261,23 @@ QPointF LinkView::mapFromPos(qreal pos, qreal levelShift) const
                    (pos + 1.5) * m_height);
 }
 
+void LinkView::adjustItems(qreal dx, qreal dy)
+{
+    QList<QGraphicsItem*> items = m_scene->items();
+    foreach(QGraphicsItem *item, items) {
+        LinkItem *linkItem = dynamic_cast<LinkItem*>(item);
+        if (linkItem && linkItem->parentItem() == 0) {
+            QPointF center = linkItem->centerPos();
+            int row = qRound(center.x() / m_width + 0.5);
+            linkItem->setTransform(m_transform);
+            linkItem->setCenterPos(center + QPointF((row - 0.5) * dx, dy));
+        }
+    }
+}
+
 void LinkView::appendOriginal(const QString &item)
 {
+    setupItem(item);
     int cnt = m_originalItems.count();
     LinkItem *linkItem = new LinkItem(item);
     m_activeLines = 1;
@@ -255,6 +290,7 @@ void LinkView::appendOriginal(const QString &item)
 
 void LinkView::appendTranslation(const QString &item, int pos)
 {
+    setupItem(item);
     LinkItem *linkItem = new LinkItem(item);
     LinkItem::State state = m_savedStates.take(item);
     if (state == LinkItem::Inactive)
@@ -331,6 +367,8 @@ void LinkView::clear()
             delete linkItem;
         }
     }
+    m_originalItems.clear();
+    setupItem();
     if (m_button)
         m_button->hide();
     if (m_hSeparator)
@@ -340,7 +378,6 @@ void LinkView::clear()
     if (m_progressIndicator)
         m_progressIndicator->start();
     m_activeLines = 0;
-    m_originalItems.clear();
     QRectF newSceneRect(QPointF(0.0, 0.0), m_view->maximumViewportSize());
     m_scene->setSceneRect(newSceneRect);
     m_view->setSceneRect(newSceneRect);

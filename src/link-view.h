@@ -64,6 +64,8 @@ protected:
 private:
     int mapToPos(const QPointF &point) const;
     QPointF mapFromPos(qreal pos, qreal levelShift = 0) const;
+    void adjustItems(qreal dx, qreal dy);
+    void setupItem(const QString &item = QString());
 
     QGraphicsScene *m_scene;
     QGraphicsView *m_view;
