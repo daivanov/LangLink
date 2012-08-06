@@ -68,7 +68,7 @@ void LinkView::setupItem(const QString &item)
     qreal angle;
     if (!item.isEmpty()) {
         int width = LinkItem::width(item);
-        angle = qAsin(m_height / (width + ITEM_FONTSIZE));
+        angle = qAsin((m_height - ITEM_FONTSIZE) / width);
         qreal rotatedWidth = width * cos(angle) + ITEM_FONTSIZE * sin(angle);
         if (m_width < rotatedWidth) {
             m_transform.reset();
