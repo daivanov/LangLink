@@ -51,6 +51,7 @@ LinkView::LinkView(int capacity, QObject *parent)
     m_scene->setBackgroundBrush(Qt::black);
     m_scene->installEventFilter(this);
 
+    m_view->setRenderHints(m_view->renderHints() | QPainter::Antialiasing);
     m_view->setWindowState(m_view->windowState() ^ Qt::WindowFullScreen);
     m_view->setFrameShape(QFrame::NoFrame);
     m_view->setScene(m_scene);

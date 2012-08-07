@@ -27,7 +27,6 @@ LinkButton::LinkButton(qreal scalingFactor, QGraphicsItem *parent)
     : QGraphicsPolygonItem(parent)
 {
     setBrush(Qt::yellow);
-    setPen(QPen(Qt::yellow));
     m_scale.scale(scalingFactor, scalingFactor);
 }
 

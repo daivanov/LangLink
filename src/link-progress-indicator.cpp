@@ -37,7 +37,6 @@ LinkProgressIndicator::LinkProgressIndicator(const QString &count,
     font.setPixelSize(scalingFactor);
     m_text->setFont(font);
     m_text->setBrush(Qt::yellow);
-    m_text->setPen(QPen(Qt::yellow));
     m_text->setCenterPos(QPointF(0.0, 0.0));
     addToGroup(m_text);
 
@@ -49,7 +48,6 @@ LinkProgressIndicator::LinkProgressIndicator(const QString &count,
             scalingFactor * BALL_RELATIVE_SIZE,
             scalingFactor * BALL_RELATIVE_SIZE);
         item->setBrush(Qt::yellow);
-        item->setPen(QPen(Qt::yellow));
         item->setOpacity(angle / (M_PI * 11 / 6));
         m_items.append(item);
         addToGroup(item);
