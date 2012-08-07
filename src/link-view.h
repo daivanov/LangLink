@@ -64,8 +64,10 @@ protected:
 private:
     int mapToPos(const QPointF &point) const;
     QPointF mapFromPos(qreal pos, qreal levelShift = 0) const;
-    void adjustItems(qreal dx, qreal dy);
-    void setupItem(const QString &item = QString());
+    void adjustItems(const QList<QGraphicsItem*> &items, qreal dx, qreal dy);
+    void updateWidth();
+    void updateOriginalWidth(const QString &item);
+    void updateTranslatedWidth(const QString &item);
 
     QGraphicsScene *m_scene;
     QGraphicsView *m_view;
@@ -87,7 +89,7 @@ private:
     QGraphicsItem *m_movingItem;
     int m_originPos, m_gapPos;
     QPointF m_translation;
-    qreal m_width, m_height;
+    qreal m_originalWidth, m_width, m_height;
     QTransform m_transform;
     qreal m_activeLines;
 

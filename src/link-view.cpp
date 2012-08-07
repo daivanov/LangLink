@@ -63,26 +63,38 @@ LinkView::~LinkView()
     delete m_view;
 }
 
-void LinkView::setupItem(const QString &item)
+void LinkView::updateOriginalWidth(const QString &item)
 {
-    qreal angle;
-    if (!item.isEmpty()) {
-        int width = LinkItem::width(item);
-        angle = qAsin((m_height - ITEM_FONTSIZE) / width);
-        qreal rotatedWidth = width * cos(angle) + ITEM_FONTSIZE * sin(angle);
-        if (m_width < rotatedWidth) {
-            m_transform.reset();
-            m_transform.rotateRadians(-angle);
-            adjustItems(rotatedWidth - m_width, 0.0);
-            m_width = rotatedWidth;
-        }
-    } else {
-        m_width = m_view->sceneRect().width() / ROWS_PER_SCREEN;
-        angle = qAsin(m_height / m_width);
+    int width = LinkItem::width(item);
+    qreal angle = qAsin((m_height - ITEM_FONTSIZE) / width);
+    qreal rotatedWidth = width * cos(angle) + ITEM_FONTSIZE * sin(angle);
+    if (m_originalWidth < rotatedWidth) {
         m_transform.reset();
         m_transform.rotateRadians(-angle);
+        adjustItems(m_originalItems, rotatedWidth - m_originalWidth, 0.0);
+        m_originalWidth = rotatedWidth;
     }
+}
 
+void LinkView::updateTranslatedWidth(const QString &item)
+{
+    int width = LinkItem::width(item);
+    qreal angle = qAsin((m_height - ITEM_FONTSIZE) / width);
+    qreal rotatedWidth = width * cos(angle) + ITEM_FONTSIZE * sin(angle);
+    if (m_width < rotatedWidth) {
+        m_transform.reset();
+        m_transform.rotateRadians(-angle);
+        adjustItems(m_translatedItems, rotatedWidth - m_width, 0.0);
+        m_width = rotatedWidth;
+    }
+}
+
+void LinkView::updateWidth()
+{
+    m_originalWidth = m_width = m_view->sceneRect().width() / ROWS_PER_SCREEN;
+    qreal angle = qAsin(m_height / m_width);
+    m_transform.reset();
+    m_transform.rotateRadians(-angle);
 }
 
 bool LinkView::eventFilter(QObject *obj, QEvent *event)
@@ -102,10 +114,12 @@ bool LinkView::eventFilter(QObject *obj, QEvent *event)
     switch (event->type()) {
     case QEvent::WindowActivate: {
         QRectF newSceneRect(QPointF(0.0, 0.0), m_view->maximumViewportSize());
-        m_scene->setSceneRect(newSceneRect);
-        m_view->setSceneRect(newSceneRect);
-        m_height = newSceneRect.height() / (m_capacity + 1);
-        setupItem();
+        if (newSceneRect != m_scene->sceneRect()) {
+            m_scene->setSceneRect(newSceneRect);
+            m_view->setSceneRect(newSceneRect);
+            m_height = newSceneRect.height() / (m_capacity + 1);
+            updateWidth();
+        }
         if (!m_closeButton) {
             m_closeButton = new LinkButton(m_height);
             QPolygonF shape;
@@ -257,18 +271,29 @@ int LinkView::mapToPos(const QPointF &point) const
 
 QPointF LinkView::mapFromPos(qreal pos, qreal levelShift) const
 {
-    return QPointF((levelShift + 1.5) * m_width,
+    qreal x;
+    if (levelShift >= -0.5)
+        x = m_originalWidth + (levelShift + 0.5) * m_width;
+    else
+        x = (levelShift + 1.5) * m_originalWidth;
+    return QPointF(x,
                    (pos + 1.5) * m_height);
 }
 
-void LinkView::adjustItems(qreal dx, qreal dy)
+void LinkView::adjustItems(const QList<QGraphicsItem*> &items, qreal dx, qreal dy)
 {
-    QList<QGraphicsItem*> items = m_scene->items();
+    int row;
     foreach(QGraphicsItem *item, items) {
         LinkItem *linkItem = dynamic_cast<LinkItem*>(item);
         if (linkItem && linkItem->parentItem() == 0) {
             QPointF center = linkItem->centerPos();
-            int row = qRound(center.x() / m_width + 0.5);
+            if (center.x() > m_originalWidth) {
+                /* Translated items*/
+                row = qRound((center.x() - m_originalWidth) / m_width + 0.5);
+            } else {
+                /* Original items*/
+                row = 1;
+            }
             linkItem->setTransform(m_transform);
             linkItem->setCenterPos(center + QPointF((row - 0.5) * dx, dy));
         }
@@ -277,7 +302,7 @@ void LinkView::adjustItems(qreal dx, qreal dy)
 
 void LinkView::appendOriginal(const QString &item)
 {
-    setupItem(item);
+    updateOriginalWidth(item);
     int cnt = m_originalItems.count();
     LinkItem *linkItem = new LinkItem(item);
     m_activeLines = 1;
@@ -290,7 +315,7 @@ void LinkView::appendOriginal(const QString &item)
 
 void LinkView::appendTranslation(const QString &item, int pos)
 {
-    setupItem(item);
+    updateTranslatedWidth(item);
     LinkItem *linkItem = new LinkItem(item);
     LinkItem::State state = m_savedStates.take(item);
     if (state == LinkItem::Inactive)
@@ -368,7 +393,7 @@ void LinkView::clear()
         }
     }
     m_originalItems.clear();
-    setupItem();
+    updateWidth();
     if (m_button)
         m_button->hide();
     if (m_hSeparator)
@@ -406,8 +431,8 @@ void LinkView::evaluateLine()
     /* Prepare data for next iteration */
     m_activeLines++;
     QRectF sceneRect = m_scene->sceneRect();
-    if (sceneRect.width() < (m_activeLines + 1) * m_width) {
-        sceneRect.setWidth((m_activeLines + 1) * m_width);
+    if (sceneRect.width() < m_activeLines * m_width + m_originalWidth) {
+        sceneRect.setWidth(m_activeLines * m_width + m_originalWidth);
         m_scene->setSceneRect(sceneRect);
     }
 
@@ -415,7 +440,7 @@ void LinkView::evaluateLine()
     QList<QGraphicsItem*> items = m_scene->items();
     foreach(QGraphicsItem *item, items) {
         LinkItem *linkItem = dynamic_cast<LinkItem*>(item);
-        if (linkItem && linkItem->centerPos().x() > m_width) {
+        if (linkItem && linkItem->centerPos().x() > m_originalWidth) {
             linkItem->setCenterPos(linkItem->centerPos() + QPointF(m_width, 0.0));
         }
     }
