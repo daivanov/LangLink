@@ -92,10 +92,12 @@ void LinkView::updateTranslatedWidth(const QString &item)
 
 void LinkView::updateWidth()
 {
-    m_originalWidth = m_width = m_view->sceneRect().width() / ROWS_PER_SCREEN;
-    qreal angle = qAsin(m_height / m_width);
-    m_transform.reset();
-    m_transform.rotateRadians(-angle);
+    if (m_originalItems.isEmpty()) {
+        m_originalWidth = m_width = m_view->sceneRect().width() / ROWS_PER_SCREEN;
+        qreal angle = qAsin(m_height / m_width);
+        m_transform.reset();
+        m_transform.rotateRadians(-angle);
+    }
 }
 
 bool LinkView::eventFilter(QObject *obj, QEvent *event)
