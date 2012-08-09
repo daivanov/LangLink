@@ -26,11 +26,12 @@
 #include "link-item.h"
 
 #define BALL_RELATIVE_SIZE 0.3
+#define BALL_COUNT 12
 
 LinkProgressIndicator::LinkProgressIndicator(const QString &count,
     qreal scalingFactor, QGraphicsItem *parent) : QGraphicsItemGroup(parent),
     m_timer(new QTimer(this)),
-    m_i(0)
+    m_group(new QGraphicsItemGroup())
 {
     m_text = new LinkItem(count);
     QFont font = m_text->font();
@@ -40,18 +41,21 @@ LinkProgressIndicator::LinkProgressIndicator(const QString &count,
     m_text->setCenterPos(QPointF(0.0, 0.0));
     addToGroup(m_text);
 
+    int i = 0;
     QGraphicsEllipseItem *item;
-    for (qreal angle = 0.0; angle < 2 * M_PI; angle += M_PI / 6) {
+    for (qreal angle = 0.0; angle < 2 * M_PI; angle += 2 * M_PI / BALL_COUNT) {
         item = new QGraphicsEllipseItem(
             scalingFactor * (qCos(angle) - BALL_RELATIVE_SIZE / 2),
             scalingFactor * (qSin(angle) - BALL_RELATIVE_SIZE / 2),
             scalingFactor * BALL_RELATIVE_SIZE,
             scalingFactor * BALL_RELATIVE_SIZE);
         item->setBrush(Qt::yellow);
-        item->setOpacity(angle / (M_PI * 11 / 6));
+        item->setOpacity((i % BALL_COUNT) / (double) BALL_COUNT);
+        i++;
         m_items.append(item);
-        addToGroup(item);
+        m_group->addToGroup(item);
     }
+    addToGroup(m_group);
 
     connect(m_timer, SIGNAL(timeout()),
             SLOT(tick()));
@@ -64,7 +68,6 @@ LinkProgressIndicator::~LinkProgressIndicator()
 void LinkProgressIndicator::start(int msec)
 {
     show();
-    m_i = m_items.count() - 1;
     m_timer->start(msec);
 }
 
@@ -76,13 +79,8 @@ void LinkProgressIndicator::stop()
 
 void LinkProgressIndicator::tick()
 {
-    int cnt = m_items.count();
-    for (int i = 0; i < cnt; ++i) {
-        m_items.at(i)->setOpacity(((i + m_i) % (cnt - 1)) / (cnt - 1.0));
-    }
-    m_i--;
-    if (m_i < 0)
-        m_i = m_items.count() - 1;
+    m_transform.rotateRadians(2 * M_PI / BALL_COUNT);
+    m_group->setTransform(m_transform);
 }
 
 void LinkProgressIndicator::setCount(const QString &count)

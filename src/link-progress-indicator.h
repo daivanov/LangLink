@@ -21,6 +21,7 @@
 #define LINK_PROGRESS_INDICATOR_H
 
 #include <QGraphicsItemGroup>
+#include <QTransform>
 #include <QObject>
 
 class QTimer;
@@ -49,7 +50,8 @@ private:
     QTimer *m_timer;
     QList<QGraphicsItem*> m_items;
     LinkItem *m_text;
-    int m_i;
+    QGraphicsItemGroup *m_group;
+    QTransform m_transform;
 };
 
 #endif // LINK_PROGRESS_INDICATOR_H
